@@ -347,6 +347,8 @@ to disk. No configuration changes are required.
 
 Use the button below to add `dkwolf1/ha-deco` as a custom integration repository in Marketplace or HACS, then install it and restart Home Assistant. This repository is not yet in the default catalog.
 
+Switching from the original repository? Follow the [migration steps](https://github.com/dkwolf1/ha-deco/wiki/Installation#switching-from-the-original-repository) without deleting your configured Deco integration.
+
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=dkwolf1&repository=ha-deco&category=integration)
 
 ### Manual
@@ -584,3 +586,7 @@ Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [in
 [releases-shield]: https://img.shields.io/github/release/dkwolf1/ha-deco.svg?style=for-the-badge
 [releases]: https://github.com/dkwolf1/ha-deco/releases
 [user_profile]: https://github.com/dkwolf1
+
+## Support
+
+If you find ha-deco useful, you can [support its maintenance on Ko-fi](https://ko-fi.com/dkw1988).
