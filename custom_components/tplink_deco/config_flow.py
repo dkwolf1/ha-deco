@@ -24,6 +24,7 @@ from .const import CONF_CLIENT_PREFIX
 from .const import CONF_DECO_POSTFIX
 from .const import CONF_DECO_PREFIX
 from .const import CONF_DEVICE_LIST_INTERVAL
+from .const import CONF_ENABLE_NEW_CLIENT_TRACKERS
 from .const import CONF_EXPOSE_WIFI_SSIDS
 from .const import CONF_LINK_CLIENT_DEVICES
 from .const import CONF_SYSLOG_ENABLED
@@ -41,6 +42,7 @@ from .const import COORDINATOR_MOBILE_KEY
 from .const import COORDINATOR_WIRELESS_KEY
 from .const import DEFAULT_CONSIDER_HOME
 from .const import DEFAULT_DECO_POSTFIX
+from .const import DEFAULT_ENABLE_NEW_CLIENT_TRACKERS
 from .const import DEFAULT_EXPOSE_WIFI_SSIDS
 from .const import DEFAULT_LINK_CLIENT_DEVICES
 from .const import DEFAULT_SCAN_INTERVAL
@@ -158,6 +160,12 @@ def _get_schema(data: dict[str:Any]):
             vol.Required(
                 CONF_LINK_CLIENT_DEVICES,
                 default=data.get(CONF_LINK_CLIENT_DEVICES, DEFAULT_LINK_CLIENT_DEVICES),
+            ): bool,
+            vol.Required(
+                CONF_ENABLE_NEW_CLIENT_TRACKERS,
+                default=data.get(
+                    CONF_ENABLE_NEW_CLIENT_TRACKERS, DEFAULT_ENABLE_NEW_CLIENT_TRACKERS
+                ),
             ): bool,
             vol.Required(
                 CONF_EXPOSE_WIFI_SSIDS,

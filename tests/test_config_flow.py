@@ -21,6 +21,7 @@ from custom_components.tplink_deco.const import CONF_CLIENT_PREFIX
 from custom_components.tplink_deco.const import CONF_DECO_POSTFIX
 from custom_components.tplink_deco.const import CONF_DECO_PREFIX
 from custom_components.tplink_deco.const import CONF_DEVICE_LIST_INTERVAL
+from custom_components.tplink_deco.const import CONF_ENABLE_NEW_CLIENT_TRACKERS
 from custom_components.tplink_deco.const import CONF_SYSLOG_ENABLED
 from custom_components.tplink_deco.const import CONF_SYSLOG_HOST
 from custom_components.tplink_deco.const import DOMAIN
@@ -104,6 +105,35 @@ async def test_initial_flow_form_is_serializable(kind):
     assert result["type"] == "form"
     assert not result["errors"]
     _serialize(result["data_schema"])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["user", "options"])
+async def test_enable_new_client_trackers_defaults_off_and_can_be_saved(kind):
+    flow, _entry = _flow(kind)
+    schema = (await _step(flow, kind))["data_schema"]
+    assert schema(_data())[CONF_ENABLE_NEW_CLIENT_TRACKERS] is False
+    submitted = schema(_data() | {CONF_ENABLE_NEW_CLIENT_TRACKERS: True})
+
+    with patch.object(
+        config_flow, "_async_test_credentials", AsyncMock(return_value={})
+    ):
+        result = await _step(flow, kind, submitted)
+
+    assert result["type"] == "create_entry"
+    save = (
+        flow.async_create_entry
+        if kind == "user"
+        else flow.hass.config_entries.async_update_entry
+    )
+    saved = save.call_args.kwargs["data"]
+    assert saved[CONF_ENABLE_NEW_CLIENT_TRACKERS] is True
+    assert (
+        vol.Schema(config_flow._get_schema(saved))(_data())[
+            CONF_ENABLE_NEW_CLIENT_TRACKERS
+        ]
+        is True
+    )
 
 
 @pytest.mark.asyncio
