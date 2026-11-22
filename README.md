@@ -1,9 +1,9 @@
 # TP-Link Deco
 
-[![GitHub Release](https://img.shields.io/github/v/release/amosyuen/ha-tplink-deco?style=for-the-badge)](https://github.com/amosyuen/ha-tplink-deco/releases)
-[![GitHub Activity](https://img.shields.io/github/commit-activity/y/amosyuen/ha-tplink-deco?style=for-the-badge)](https://github.com/amosyuen/ha-tplink-deco/commits/main)
-[![Wiki](https://img.shields.io/badge/docs-wiki-blue?style=for-the-badge)](https://github.com/amosyuen/ha-tplink-deco/wiki)
-[![License](https://img.shields.io/github/license/amosyuen/ha-tplink-deco?style=for-the-badge)](LICENSE)
+[![GitHub Release](https://img.shields.io/github/v/release/dkwolf1/ha-deco?style=for-the-badge)](https://github.com/dkwolf1/ha-deco/releases)
+[![GitHub Activity](https://img.shields.io/github/commit-activity/y/dkwolf1/ha-deco?style=for-the-badge)](https://github.com/dkwolf1/ha-deco/commits/main)
+[![Wiki](https://img.shields.io/badge/docs-wiki-blue?style=for-the-badge)](https://github.com/dkwolf1/ha-deco/wiki)
+[![License](https://img.shields.io/github/license/dkwolf1/ha-deco?style=for-the-badge)](LICENSE)
 
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?style=for-the-badge)](https://github.com/pre-commit/pre-commit)
 [![Black](https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge)](https://github.com/psf/black)
@@ -16,11 +16,13 @@
 
 ## 🚀 Overview
 
+Independently maintained by [Dennis (@dkwolf1)](https://github.com/dkwolf1).
+
 This integration provides local polling control and diagnostics for TP-Link Deco systems within Home Assistant.
 
-For installation, configuration, troubleshooting, diagnostics, and firmware notes, see the [TP-Link Deco Wiki](https://github.com/amosyuen/ha-tplink-deco/wiki).
+For installation, configuration, troubleshooting, diagnostics, and firmware notes, see the [TP-Link Deco Wiki](https://github.com/dkwolf1/ha-deco/wiki).
 
-See the [syslog setup and troubleshooting guide](https://github.com/amosyuen/ha-tplink-deco/wiki/Syslog) for the optional forwarding feature introduced in v3.15.0. Existing installations do not need to enable forwarding or recreate the integration after upgrading.
+See the [syslog setup and troubleshooting guide](https://github.com/dkwolf1/ha-deco/wiki/Syslog) for the optional forwarding feature introduced in v3.15.0. Existing installations do not need to enable forwarding or recreate the integration after upgrading.
 
 ---
 
@@ -191,7 +193,7 @@ Router log rotation, failed delivery and partial-send retries can still cause
 loss or duplication. This is not a guaranteed lossless archive. Avoid
 shortening the polling interval on a slow mesh merely to reduce burst size.
 
-See [Syslog in the wiki](https://github.com/amosyuen/ha-tplink-deco/wiki/Syslog)
+See [Syslog in the wiki](https://github.com/dkwolf1/ha-deco/wiki/Syslog)
 for receiver configuration, UDP/TCP tests and cleanup instructions.
 
 Forwarding isn't available on firmware that uses the legacy encrypted web
@@ -343,17 +345,9 @@ to disk. No configuration changes are required.
 
 ### Marketplace / HACS
 
-For Home Assistant 2026.11 and later:
+Use the button below to add `dkwolf1/ha-deco` as a custom integration repository in Marketplace or HACS, then install it and restart Home Assistant. This repository is not yet in the default catalog.
 
-1. Open **Settings > Marketplace**.
-2. Search for **TP-Link Deco**.
-3. Select the integration and choose **Install**.
-
-For Home Assistant 2026.10 and earlier, follow the same steps under **HACS > Integrations**.
-
-The button below opens this repository in Marketplace on Home Assistant 2026.11 and later, and in HACS on older versions:
-
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=amosyuen&repository=ha-tplink-deco&category=integration)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=dkwolf1&repository=ha-deco&category=integration)
 
 ### Manual
 
@@ -529,7 +523,7 @@ new lines. The default interval is five minutes.
 A successful UDP send does not confirm receipt. On v3.15.0 through v3.15.2,
 cap warnings mean older excess lines were skipped; update to v3.15.3 or newer
 for chronological, checkpointed batches. See the
-[syslog guide](https://github.com/amosyuen/ha-tplink-deco/wiki/Syslog) for details.
+[syslog guide](https://github.com/dkwolf1/ha-deco/wiki/Syslog) for details.
 
 ### Deprecated connection-class warning
 
@@ -552,9 +546,11 @@ You may see extra devices show up under the Tp-Link deco integration as per http
 
 ## Contributions are welcome!
 
-If you want to contribute to this please read the [Contribution guidelines](https://github.com/amosyuen/ha-tplink-deco/blob/main/CONTRIBUTING.md)
+If you want to contribute to this please read the [Contribution guidelines](https://github.com/dkwolf1/ha-deco/blob/main/CONTRIBUTING.md)
 
 ## Credits
+
+Thanks to [Amos Yuen](https://github.com/amosyuen) for creating the [original integration](https://github.com/amosyuen/ha-tplink-deco).
 
 Thank you to all contributors. The v3.15.0 system-log and compatibility work
 includes contributions from [@alunduil](https://github.com/alunduil),
@@ -563,7 +559,6 @@ includes contributions from [@alunduil](https://github.com/alunduil),
 and [@dkwolf1](https://github.com/dkwolf1). See the release notes and commit
 history for individual contributions.
 
-[![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 [![Community Forum][forum-shield]][forum]
 
 This project was generated from [@oncleben31](https://github.com/oncleben31)'s [Home Assistant Custom Component Cookiecutter](https://github.com/oncleben31/cookiecutter-homeassistant-custom-component) template.
@@ -575,19 +570,17 @@ Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [in
 [integration_blueprint]: https://github.com/custom-components/integration_blueprint
 [black]: https://github.com/psf/black
 [black-shield]: https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge
-[buymecoffee]: https://paypal.me/amosyuen
-[buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
-[commits-shield]: https://img.shields.io/github/commit-activity/y/amosyuen/ha-tplink-deco.svg?style=for-the-badge
-[commits]: https://github.com/amosyuen/ha-tplink-deco/commits/main
+[commits-shield]: https://img.shields.io/github/commit-activity/y/dkwolf1/ha-deco.svg?style=for-the-badge
+[commits]: https://github.com/dkwolf1/ha-deco/commits/main
 [hacs]: https://hacs.xyz
 [hacsbadge]: https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge
 [exampleimg]: example.png
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
 [forum]: https://community.home-assistant.io/
-[license-shield]: https://img.shields.io/github/license/amosyuen/ha-tplink-deco.svg?style=for-the-badge
-[maintenance-shield]: https://img.shields.io/badge/maintainer-%40amosyuen-blue.svg?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/dkwolf1/ha-deco.svg?style=for-the-badge
+[maintenance-shield]: https://img.shields.io/badge/maintainer-%40dkwolf1-blue.svg?style=for-the-badge
 [pre-commit]: https://github.com/pre-commit/pre-commit
 [pre-commit-shield]: https://img.shields.io/badge/pre--commit-enabled-brightgreen?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/amosyuen/ha-tplink-deco.svg?style=for-the-badge
-[releases]: https://github.com/amosyuen/ha-tplink-deco/releases
-[user_profile]: https://github.com/amosyuen
+[releases-shield]: https://img.shields.io/github/release/dkwolf1/ha-deco.svg?style=for-the-badge
+[releases]: https://github.com/dkwolf1/ha-deco/releases
+[user_profile]: https://github.com/dkwolf1
