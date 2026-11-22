@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Installation and troubleshooting
+    url: https://github.com/dkwolf1/ha-deco/wiki
+    about: Find installation, migration and troubleshooting guides.
+  - name: Report a vulnerability privately
+    url: https://github.com/dkwolf1/ha-deco/security/advisories/new
+    about: Report security vulnerabilities without opening a public issue.
