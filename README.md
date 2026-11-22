@@ -244,6 +244,8 @@ endpoints. Some features are unavailable on particular models or firmware.
 
 Device trackers are added for both decos and clients. The device tracker state marks whether the device is connected to the deco. If a device is not present, the previous values for attributes are saved except for `down_kilobytes_per_s` and `up_kilobytes_per_s`.
 
+Turn on **Enable trackers for new clients** in the integration options to enable newly registered client trackers by default. The option is off by default and does not change existing entities or override Home Assistant's **Disable new entities** setting.
+
 By default, Home Assistant may link a client tracker to a device from another integration when both report the same MAC address. Disable **Link client trackers to devices by MAC address** in the integration options to prevent this. The tracker keeps its entity ID and exposes the MAC as a state attribute, but no longer participates in MAC-based device matching or DHCP discovery. Existing client devices can then be removed manually; Deco devices remain protected.
 
 #### Common Attributes

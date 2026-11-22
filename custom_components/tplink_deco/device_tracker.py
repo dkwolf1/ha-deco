@@ -37,9 +37,11 @@ from .const import CONF_CLIENT_POSTFIX
 from .const import CONF_CLIENT_PREFIX
 from .const import CONF_DECO_POSTFIX
 from .const import CONF_DECO_PREFIX
+from .const import CONF_ENABLE_NEW_CLIENT_TRACKERS
 from .const import CONF_LINK_CLIENT_DEVICES
 from .const import COORDINATOR_CLIENTS_KEY
 from .const import COORDINATOR_DECOS_KEY
+from .const import DEFAULT_ENABLE_NEW_CLIENT_TRACKERS
 from .const import DEFAULT_LINK_CLIENT_DEVICES
 from .const import DEVICE_TYPE_CLIENT
 from .const import DEVICE_TYPE_DECO
@@ -68,7 +70,7 @@ def _generate_name(name: str, prefix: str, postfix: str):
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities
 ):
-    """Setup binary_sensor platform."""
+    """Set up the device tracker platform."""
     data = hass.data[DOMAIN][entry.entry_id]
     coordinator_decos = data[COORDINATOR_DECOS_KEY]
     coordinator_clients = data[COORDINATOR_CLIENTS_KEY]
@@ -90,6 +92,9 @@ async def async_setup_entry(
         client_prefix,
         client_postfix,
         link_client_devices,
+        enable_new_client_trackers=entry.data.get(
+            CONF_ENABLE_NEW_CLIENT_TRACKERS, DEFAULT_ENABLE_NEW_CLIENT_TRACKERS
+        ),
     )
 
 
@@ -147,6 +152,8 @@ def _async_setup_clients(
     client_prefix: str,
     client_postfix: str,
     link_client_devices: bool,
+    *,
+    enable_new_client_trackers: bool,
 ):
     tracked_clients = set()
 
@@ -168,6 +175,7 @@ def _async_setup_clients(
                     client_prefix,
                     client_postfix,
                     link_client_devices,
+                    enabled_by_default=enable_new_client_trackers,
                 )
             )
             tracked_clients.add(mac)
@@ -353,10 +361,13 @@ class TplinkDecoClientDeviceTracker(CoordinatorEntity, RestoreEntity, ScannerEnt
         client_prefix: str,
         client_postfix: str,
         link_client_devices: bool,
+        *,
+        enabled_by_default: bool,
     ) -> None:
         """Initialize a TP-Link Deco device."""
         self._attr_connection_type = None
         self._attr_deco_mac = None
+        self._attr_entity_registry_enabled_default = enabled_by_default
         self._attr_interface = None
         self._attr_ip_address = None
         self._attr_name = None
