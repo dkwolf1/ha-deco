@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "description": "Använd användaruppgifterna för webbportalen. Följ instruktioner enligt sidan https://github.com/amosyuen/ha-tplink-deco#configuration-important-please-read",
+        "description": "Använd användaruppgifterna för webbportalen. Följ instruktioner enligt sidan https://github.com/dkwolf1/ha-deco#configuration-important-please-read",
         "data": {
           "host": "Värd",
           "username": "Användarnamn",
@@ -19,7 +19,7 @@
         }
       },
       "reauth_confirm": {
-        "description": "Problem med användaruppgifterna. En möjlig orsak är inloggning på en separat enhet. Läs https://github.com/amosyuen/ha-tplink-deco#login-credentials",
+        "description": "Problem med användaruppgifterna. En möjlig orsak är inloggning på en separat enhet. Läs https://github.com/dkwolf1/ha-deco#login-credentials",
         "data": {
           "username": "Användarnamn",
           "password": "Lösenord"
@@ -39,7 +39,7 @@
   "options": {
     "step": {
       "init": {
-        "description": "Använd användaruppgifterna för webbportalen. Följ instruktioner enligt sidan https://github.com/amosyuen/ha-tplink-deco#configuration-important-please-read",
+        "description": "Använd användaruppgifterna för webbportalen. Följ instruktioner enligt sidan https://github.com/dkwolf1/ha-deco#configuration-important-please-read",
         "data": {
           "host": "Värd",
           "username": "Användarnamn",
