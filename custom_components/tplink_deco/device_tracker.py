@@ -367,7 +367,7 @@ class TplinkDecoClientDeviceTracker(CoordinatorEntity, RestoreEntity, ScannerEnt
         """Initialize a TP-Link Deco device."""
         self._attr_connection_type = None
         self._attr_deco_mac = None
-        self._attr_entity_registry_enabled_default = enabled_by_default
+        self._enable_new_client_tracker = enabled_by_default
         self._attr_interface = None
         self._attr_ip_address = None
         self._attr_name = None
@@ -379,6 +379,13 @@ class TplinkDecoClientDeviceTracker(CoordinatorEntity, RestoreEntity, ScannerEnt
         self._mac_address = client.mac
         self._update_from_client()
         super().__init__(coordinator_clients)
+
+    @property
+    def entity_registry_enabled_default(self) -> bool:
+        """Opt in to enabling new trackers, or keep Home Assistant's default."""
+        return (
+            self._enable_new_client_tracker or super().entity_registry_enabled_default
+        )
 
     async def async_added_to_hass(self):
         """Run when entity about to be added."""

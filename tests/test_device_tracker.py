@@ -20,7 +20,16 @@ from custom_components.tplink_deco.coordinator import TpLinkDecoClient
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("setting", [None, False, True])
-async def test_tracker_default_applies_to_initial_and_later_discovery(setting):
+@pytest.mark.parametrize("inherited_default", [False, True])
+async def test_tracker_default_applies_to_initial_and_later_discovery(
+    setting, inherited_default, monkeypatch
+):
+    monkeypatch.setattr(
+        device_tracker.ScannerEntity,
+        "entity_registry_enabled_default",
+        property(lambda self: inherited_default),
+    )
+    expected = setting is True or inherited_default
     first = TpLinkDecoClient("AA:BB:CC:DD:EE:01")
     second = TpLinkDecoClient("AA:BB:CC:DD:EE:02")
     clients = MagicMock()
@@ -55,7 +64,7 @@ async def test_tracker_default_applies_to_initial_and_later_discovery(setting):
 
     setup_decos.assert_called_once_with(hass, add_entities, decos, "", "")
     (initial,) = add_entities.call_args.args[0]
-    assert initial.entity_registry_enabled_default is (setting is True)
+    assert initial.entity_registry_enabled_default is expected
 
     clients.data[second.mac] = second
     (on_update,) = clients.async_add_listener.call_args.args
@@ -64,4 +73,4 @@ async def test_tracker_default_applies_to_initial_and_later_discovery(setting):
     assert add_entities.call_count == 2
     (discovered,) = add_entities.call_args.args[0]
     assert discovered.unique_id == second.mac
-    assert discovered.entity_registry_enabled_default is (setting is True)
+    assert discovered.entity_registry_enabled_default is expected
