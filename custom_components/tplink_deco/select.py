@@ -5,6 +5,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .client_controls import DecoClientAccessSelect
+from .const import CLIENT_BLOCK_CONTROLS_KEY
 from .const import COORDINATOR_DECOS_KEY
 from .const import DOMAIN
 from .device import create_device_info
@@ -18,8 +20,12 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ):
     """Set up select entities."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id][COORDINATOR_DECOS_KEY]
-    async_add_entities([DecoPollingIntervalSelect(hass, config_entry, coordinator)])
+    data = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator = data[COORDINATOR_DECOS_KEY]
+    entities = [DecoPollingIntervalSelect(hass, config_entry, coordinator)]
+    if (controls := data.get(CLIENT_BLOCK_CONTROLS_KEY)) is not None:
+        entities.append(DecoClientAccessSelect(controls))
+    async_add_entities(entities)
 
 
 class DecoPollingIntervalSelect(SelectEntity):

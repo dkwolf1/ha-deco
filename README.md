@@ -149,6 +149,20 @@ delay integration setup when the optional endpoint is slow or unavailable.
 Changing WiFi settings is not supported because the local write API is not
 reliable across Deco models and firmware versions.
 
+### Client blocking and unblocking
+
+Starting with v4.0.0, Home Assistant administrators can manage the Deco block
+list for individual clients on supported firmware. To show the controls, enable
+**Show experimental client blocking controls** in the Deco integration options
+and open the main Deco device. Select a client, then choose **Block client** or
+**Unblock client**. Use **Refresh client block list** after changes in the Deco app.
+
+The controls are off by default and were tested on a Deco X50. Block list
+membership describes the Deco rule, not whether a local service on that client
+is reachable. Start with a device you can safely disconnect. See the
+[client access guide](https://github.com/dkwolf1/ha-deco/wiki/Entities-and-Actions#client-access-experimental)
+for supported behavior and the administrator-only action.
+
 ### Syslog forwarding
 
 Forwarding sends new Deco system log lines to a syslog server as RFC 5424

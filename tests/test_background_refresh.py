@@ -42,6 +42,7 @@ async def test_initial_optional_refreshes_remain_background_tasks():
 
     config_entry = MagicMock()
     config_entry.entry_id = "entry"
+    config_entry.data = {}
     config_entry.async_create_background_task.side_effect = capture_background_task
     hass = SimpleNamespace(
         data={},
@@ -60,6 +61,8 @@ async def test_initial_optional_refreshes_remain_background_tasks():
         ),
     ):
         assert await async_setup_entry(hass, config_entry) is True
+
+    deco_coordinator.api.async_get_blocked_clients.assert_not_called()
 
     clients_coordinator.async_refresh.assert_called_once_with()
     wireless_coordinator.async_refresh.assert_called_once_with()
