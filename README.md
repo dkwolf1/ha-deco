@@ -22,6 +22,8 @@ This integration provides local polling control and diagnostics for TP-Link Deco
 
 For installation, configuration, troubleshooting, diagnostics, and firmware notes, see the [TP-Link Deco Wiki](https://github.com/dkwolf1/ha-deco/wiki).
 
+**Switching from `amosyuen/ha-tplink-deco`?** If Marketplace shows **TP-Link Deco is in use**, cancel the uninstall prompt. To keep your existing Deco configuration, devices, and entity IDs, stay on the original installation for now. See the [migration guide](https://github.com/dkwolf1/ha-deco/wiki/Installation#switching-from-the-original-repository) for details.
+
 For a dashboard view of your mesh, see the optional [TP-Link Deco Lovelace card (ha-tplink-card)](https://github.com/dkwolf1/ha-tplink-card). It shows mesh topology, connected clients, throughput, Wi-Fi status, and API diagnostics. Install the card separately after configuring the integration.
 
 See the [syslog setup and troubleshooting guide](https://github.com/dkwolf1/ha-deco/wiki/Syslog) for the optional forwarding feature introduced in v3.15.0. Existing installations do not need to enable forwarding or recreate the integration after upgrading.
@@ -350,8 +352,6 @@ to disk. No configuration changes are required.
 ### Marketplace / HACS
 
 Use the button below to add `dkwolf1/ha-deco` as a custom integration repository in Marketplace or HACS, then install it and restart Home Assistant. This repository is not yet in the default catalog.
-
-Switching from the original repository? Follow the [migration steps](https://github.com/dkwolf1/ha-deco/wiki/Installation#switching-from-the-original-repository) without deleting your configured Deco integration.
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=dkwolf1&repository=ha-deco&category=integration)
 
