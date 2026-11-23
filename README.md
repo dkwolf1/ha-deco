@@ -155,9 +155,9 @@ Starting with v4.0.0, Home Assistant administrators can manage the Deco block
 list for individual clients on supported firmware. Open **Settings > Devices &
 services > TP-Link Deco**, then the options for the intended Deco entry. Enable
 **Show experimental client blocking controls** and save. Open the **main Deco**
-device (not the client device), select a client under **Controls > Client access**,
-then choose **Block client** or **Unblock client**. Use **Refresh client block list**
-after changes in the Deco app.
+device (not the client device) and look for **Client access** under **Controls**.
+In v4.1.0 and later, choose a client in step 1, then press **Block** or **Unblock**.
+Use **Refresh block list** after changes in the Deco app.
 
 The controls are off by default and were tested on a Deco X50. Updating an
 existing installation of this repository to v4.0.0 requires no migration. Block list
@@ -165,6 +165,19 @@ membership describes the Deco rule, not whether a local service on that client
 is reachable. Start with a device you can safely disconnect. See the
 [client access guide](https://github.com/dkwolf1/ha-deco/wiki/Entities-and-Actions#client-access-experimental)
 for supported behavior and the administrator-only action.
+
+### Client renaming
+
+Starting with v4.1.0, administrators can rename connected clients on supported
+Deco firmware. Enable **Show experimental client renaming controls** for the
+intended Deco entry. On the main Deco device, use the **Client rename** controls
+in order: select a client, enter and confirm a new name, then press **Apply**.
+The name field holds a draft; it does not send a change on its own.
+
+Renaming is off by default on the device page and independent of blocking.
+The Deco name changes, not the Home Assistant entity ID. The integration
+verifies the new name and existing client type before reporting success. See
+the [client renaming guide](https://github.com/dkwolf1/ha-deco/wiki/Entities-and-Actions#client-renaming-experimental).
 
 ### Syslog forwarding
 
@@ -231,6 +244,7 @@ warning and stops forwarding until it's reloaded.
 - `tplink_deco.reboot_deco`
 - `tplink_deco.download_system_log`
 - `tplink_deco.set_client_blocked` (experimental; administrator only)
+- `tplink_deco.rename_client` (experimental; administrator only)
 
 ---
 

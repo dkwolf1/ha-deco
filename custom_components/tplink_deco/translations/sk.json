@@ -1,9 +1,34 @@
 {
+  "entity": {
+    "select": {
+      "client_access": {
+        "name": "Prístup klientov: 1. Vybrať klienta",
+        "state": { "select_client": "Vyberte klienta" }
+      },
+      "client_to_rename": {
+        "name": "Názov klienta: 1. Vybrať klienta",
+        "state": { "select_client": "Vyberte klienta" }
+      }
+    },
+    "text": {
+      "new_client_name": { "name": "Názov klienta: 2. Nový názov" }
+    },
+    "button": {
+      "block_client": { "name": "Prístup klientov: 2. Zablokovať" },
+      "unblock_client": { "name": "Prístup klientov: 3. Odblokovať" },
+      "refresh_client_block_list": {
+        "name": "Prístup klientov: 4. Obnoviť zoznam"
+      },
+      "rename_client": { "name": "Názov klienta: 3. Použiť" }
+    }
+  },
   "config": {
     "step": {
       "user": {
         "description": "Použite poverenia pre webový portál správcu. Pozri https://github.com/dkwolf1/ha-deco#configuration-important-please-read",
         "data": {
+          "experimental_client_block_controls": "Zobraziť experimentálne ovládanie blokovania klientov",
+          "experimental_client_rename_controls": "Zobraziť experimentálne ovládanie premenovania klientov",
           "host": "Host",
           "username": "užívateľské meno",
           "password": "Heslo",
@@ -44,6 +69,8 @@
       "init": {
         "description": "Použite poverenia pre webový portál správcu. Pozri https://github.com/dkwolf1/ha-deco#configuration-important-please-read",
         "data": {
+          "experimental_client_block_controls": "Zobraziť experimentálne ovládanie blokovania klientov",
+          "experimental_client_rename_controls": "Zobraziť experimentálne ovládanie premenovania klientov",
           "host": "Host",
           "username": "Užívateľské meno",
           "password": "Heslo",

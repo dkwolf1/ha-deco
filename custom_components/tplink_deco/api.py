@@ -571,11 +571,85 @@ class TplinkDecoApi:
         return blocked_clients
 
     async def _async_client_blocklist_request(self, payload: dict) -> dict:
-        context = "Client block list"
+        return await self._async_client_request(
+            "Client block list", "black_list", payload
+        )
+
+    async def async_rename_client(self, mac: str, name: str) -> bool:
+        """Rename one connected client and verify both its name and type."""
+        async with self._operation_lock:
+            await self.async_login_if_needed()
+            if self._outer_id is not None:
+                raise UnsupportedFirmwareException(
+                    "Client renaming is not supported on legacy Deco firmware"
+                )
+
+            key = mac.replace("-", "").replace(":", "").upper()
+            client = await self._async_get_client_for_rename(key)
+            if decode_name_with_fallback(client["name"]) == name:
+                return False
+            client_type = client.get("client_type")
+            if not isinstance(client_type, str) or not client_type.strip():
+                raise UnsupportedFirmwareException(
+                    "Deco did not report the current client type; no rename was sent"
+                )
+
+            # Send the current type with the name because firmware applies them together.
+            await self._async_client_request(
+                "Rename client",
+                "client_list",
+                {
+                    "operation": "write",
+                    "params": {
+                        "client_list": [
+                            {
+                                "mac": "-".join(
+                                    key[i : i + 2] for i in range(0, 12, 2)
+                                ),
+                                "name": base64.b64encode(name.encode("utf-8")).decode(),
+                                "user_set_name_type": True,
+                                "client_type": client_type,
+                            }
+                        ]
+                    },
+                },
+            )
+            updated = await self._async_get_client_for_rename(key)
+            if (
+                decode_name_with_fallback(updated["name"]) != name
+                or updated.get("client_type") != client_type
+            ):
+                raise UnexpectedApiException("Deco did not verify the client rename")
+            return True
+
+    async def _async_get_client_for_rename(self, mac_key: str) -> dict:
+        response = await self._async_client_request(
+            "Read client for rename",
+            "client_list",
+            {"operation": "read", "params": {"device_mac": "default"}},
+        )
+        result = response.get("result")
+        clients = result.get("client_list") if isinstance(result, dict) else None
+        if not isinstance(clients, list):
+            raise UnexpectedApiException("Deco returned an invalid client list")
+        matches = [
+            client
+            for client in clients
+            if isinstance(client, dict)
+            and isinstance(client.get("mac"), str)
+            and client["mac"].replace("-", "").replace(":", "").upper() == mac_key
+        ]
+        if len(matches) != 1 or not isinstance(matches[0].get("name"), str):
+            raise UnexpectedApiException("Deco did not report one matching client")
+        return matches[0]
+
+    async def _async_client_request(
+        self, context: str, form: str, payload: dict
+    ) -> dict:
         response = await self._async_post(
             context,
             f"{self._host}/cgi-bin/luci/;stok={self._stok}/admin/client",
-            params={"form": "black_list"},
+            params={"form": form},
             data=self._encode_payload(payload),
         )
         data = (
@@ -584,7 +658,7 @@ class TplinkDecoApi:
             else response
         )
         if not isinstance(data, dict):
-            raise UnexpectedApiException("Deco returned an invalid block list response")
+            raise UnexpectedApiException(f"{context}: invalid response from Deco")
         self._check_authenticated_data_error_code(context, data)
         return data
 

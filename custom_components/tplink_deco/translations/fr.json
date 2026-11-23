@@ -1,9 +1,34 @@
 {
+  "entity": {
+    "select": {
+      "client_access": {
+        "name": "Accès client : 1. Choisir le client",
+        "state": { "select_client": "Choisir un client" }
+      },
+      "client_to_rename": {
+        "name": "Nom du client : 1. Choisir le client",
+        "state": { "select_client": "Choisir un client" }
+      }
+    },
+    "text": {
+      "new_client_name": { "name": "Nom du client : 2. Nouveau nom" }
+    },
+    "button": {
+      "block_client": { "name": "Accès client : 2. Bloquer" },
+      "unblock_client": { "name": "Accès client : 3. Débloquer" },
+      "refresh_client_block_list": {
+        "name": "Accès client : 4. Actualiser la liste"
+      },
+      "rename_client": { "name": "Nom du client : 3. Appliquer" }
+    }
+  },
   "config": {
     "step": {
       "user": {
         "title": "TP-Link Deco",
         "data": {
+          "experimental_client_block_controls": "Afficher les commandes expérimentales de blocage des clients",
+          "experimental_client_rename_controls": "Afficher les commandes expérimentales de renommage des clients",
           "username": "Identifiant",
           "password": "Mot de Passe"
         }
@@ -23,6 +48,8 @@
       "init": {
         "title": "TP-Link Deco",
         "data": {
+          "experimental_client_block_controls": "Afficher les commandes expérimentales de blocage des clients",
+          "experimental_client_rename_controls": "Afficher les commandes expérimentales de renommage des clients",
           "username": "Identifiant",
           "password": "Mot de Passe"
         }

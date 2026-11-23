@@ -1,12 +1,25 @@
 {
   "entity": {
     "select": {
-      "client_access": { "name": "Client access" }
+      "client_access": {
+        "name": "Client access: 1. Select client",
+        "state": { "select_client": "Choose a client" }
+      },
+      "client_to_rename": {
+        "name": "Client rename: 1. Select client",
+        "state": { "select_client": "Choose a client" }
+      }
+    },
+    "text": {
+      "new_client_name": { "name": "Client rename: 2. New name" }
     },
     "button": {
-      "block_client": { "name": "Block client" },
-      "unblock_client": { "name": "Unblock client" },
-      "refresh_client_block_list": { "name": "Refresh client block list" }
+      "block_client": { "name": "Client access: 2. Block" },
+      "unblock_client": { "name": "Client access: 3. Unblock" },
+      "refresh_client_block_list": {
+        "name": "Client access: 4. Refresh block list"
+      },
+      "rename_client": { "name": "Client rename: 3. Apply" }
     }
   },
   "config": {
@@ -26,6 +39,7 @@
           "link_client_devices": "Link client trackers to devices by MAC address",
           "enable_new_client_trackers": "Enable trackers for new clients",
           "experimental_client_block_controls": "Show experimental client blocking controls",
+          "experimental_client_rename_controls": "Show experimental client renaming controls",
           "expose_wifi_ssids": "Show WiFi network names on the WiFi status sensors",
           "client_prefix": "Client name prefix",
           "client_postfix": "Client name postfix",
@@ -76,6 +90,7 @@
           "link_client_devices": "Link client trackers to devices by MAC address",
           "enable_new_client_trackers": "Enable trackers for new clients",
           "experimental_client_block_controls": "Show experimental client blocking controls",
+          "experimental_client_rename_controls": "Show experimental client renaming controls",
           "expose_wifi_ssids": "Show WiFi network names on the WiFi status sensors",
           "client_prefix": "Client name prefix",
           "client_postfix": "Client name postfix",

@@ -27,6 +27,7 @@ from .const import COORDINATOR_CLIENTS_KEY
 from .const import COORDINATOR_DECOS_KEY
 from .const import DOMAIN
 from .const import SERVICE_DOWNLOAD_SYSTEM_LOG
+from .const import SERVICE_RENAME_CLIENT
 from .const import SERVICE_SET_CLIENT_BLOCKED
 from .exceptions import EmptyDataException
 from .exceptions import ForbiddenException
@@ -41,12 +42,13 @@ from .system_log import SystemLogLevel
 ATTR_FILENAME = "filename"
 ATTR_LOG_LEVEL = "log_level"
 ATTR_MAC = "mac"
+ATTR_NAME = "name"
 ATTR_BLOCKED = "blocked"
 SYSTEM_LOG_DIR = "tplink_deco_logs"
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
-CLIENT_BLOCKLIST_ERRORS = (
+CLIENT_ACTION_ERRORS = (
     aiohttp.ClientError,
     EmptyDataException,
     ForbiddenException,
@@ -68,7 +70,7 @@ DOWNLOAD_SYSTEM_LOG_SCHEMA = vol.Schema(
 )
 
 
-def _client_mac(value: str) -> str:
+def normalize_client_mac(value: str) -> str:
     mac = cv.string(value).strip().upper().replace("-", ":")
     if not re.fullmatch(r"(?:[0-9A-F]{2}:){5}[0-9A-F]{2}", mac):
         raise vol.Invalid("Expected a MAC address, such as 02:00:00:00:00:01")
@@ -80,8 +82,24 @@ def _client_mac(value: str) -> str:
 SET_CLIENT_BLOCKED_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
-        vol.Required(ATTR_MAC): _client_mac,
+        vol.Required(ATTR_MAC): normalize_client_mac,
         vol.Required(ATTR_BLOCKED): cv.boolean,
+    }
+)
+
+
+def validate_client_name(value: str) -> str:
+    name = cv.string(value).strip()
+    if not name or not name.isprintable() or len(name.encode("utf-8")) > 32:
+        raise vol.Invalid("Expected a printable client name of 1 to 32 UTF-8 bytes")
+    return name
+
+
+RENAME_CLIENT_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string,
+        vol.Required(ATTR_MAC): normalize_client_mac,
+        vol.Required(ATTR_NAME): validate_client_name,
     }
 )
 
@@ -160,7 +178,7 @@ def async_setup_services(hass: HomeAssistant) -> None:
             changed = await api.async_set_client_blocked(mac, blocked, name)
         except UnsupportedFirmwareException as err:
             raise ServiceValidationError(str(err)) from None
-        except CLIENT_BLOCKLIST_ERRORS:
+        except CLIENT_ACTION_ERRORS:
             if (controls := data.get(CLIENT_BLOCK_CONTROLS_KEY)) is not None:
                 controls.mark_status_unknown()
             raise ServiceValidationError(
@@ -170,6 +188,21 @@ def async_setup_services(hass: HomeAssistant) -> None:
         if (controls := data.get(CLIENT_BLOCK_CONTROLS_KEY)) is not None:
             controls.apply_verified_state(mac, blocked, name)
         return {ATTR_BLOCKED: blocked, "changed": changed}
+
+    async def async_rename_client(call: ServiceCall) -> ServiceResponse:
+        entry = async_get_target_entry(hass, call.data.get(ATTR_CONFIG_ENTRY_ID))
+        api = hass.data[DOMAIN][entry.entry_id][COORDINATOR_DECOS_KEY].api
+        name = call.data[ATTR_NAME]
+        try:
+            changed = await api.async_rename_client(call.data[ATTR_MAC], name)
+        except UnsupportedFirmwareException as err:
+            raise ServiceValidationError(str(err)) from None
+        except CLIENT_ACTION_ERRORS:
+            raise ServiceValidationError(
+                "Deco did not verify the client rename. Check that the client is "
+                "connected and check its name in the Deco app before retrying."
+            ) from None
+        return {ATTR_NAME: name, "changed": changed}
 
     async def async_download_system_log(call: ServiceCall) -> ServiceResponse:
         entry = async_get_target_entry(hass, call.data.get(ATTR_CONFIG_ENTRY_ID))
@@ -189,6 +222,14 @@ def async_setup_services(hass: HomeAssistant) -> None:
         SERVICE_DOWNLOAD_SYSTEM_LOG,
         async_download_system_log,
         schema=DOWNLOAD_SYSTEM_LOG_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    async_register_admin_service(
+        hass,
+        DOMAIN,
+        SERVICE_RENAME_CLIENT,
+        async_rename_client,
+        schema=RENAME_CLIENT_SCHEMA,
         supports_response=SupportsResponse.OPTIONAL,
     )
     async_register_admin_service(
