@@ -1,4 +1,14 @@
 {
+  "entity": {
+    "select": {
+      "client_access": { "name": "Client access" }
+    },
+    "button": {
+      "block_client": { "name": "Block client" },
+      "unblock_client": { "name": "Unblock client" },
+      "refresh_client_block_list": { "name": "Refresh client block list" }
+    }
+  },
   "config": {
     "step": {
       "user": {
@@ -15,6 +25,7 @@
           "verify_ssl": "Verify SSL certificate is valid",
           "link_client_devices": "Link client trackers to devices by MAC address",
           "enable_new_client_trackers": "Enable trackers for new clients",
+          "experimental_client_block_controls": "Show experimental client blocking controls",
           "expose_wifi_ssids": "Show WiFi network names on the WiFi status sensors",
           "client_prefix": "Client name prefix",
           "client_postfix": "Client name postfix",
@@ -64,6 +75,7 @@
           "verify_ssl": "Verify SSL certificate is valid",
           "link_client_devices": "Link client trackers to devices by MAC address",
           "enable_new_client_trackers": "Enable trackers for new clients",
+          "experimental_client_block_controls": "Show experimental client blocking controls",
           "expose_wifi_ssids": "Show WiFi network names on the WiFi status sensors",
           "client_prefix": "Client name prefix",
           "client_postfix": "Client name postfix",

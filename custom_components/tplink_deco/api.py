@@ -495,6 +495,99 @@ class TplinkDecoApi:
             _LOGGER.error("%s parse response error=%s", context, err)
             raise err
 
+    async def async_set_client_blocked(
+        self, mac: str, blocked: bool, name: str = "ha-deco test client"
+    ) -> bool:
+        """Set and verify one block list entry; return whether it changed."""
+        async with self._operation_lock:
+            await self.async_login_if_needed()
+            if self._outer_id is not None:
+                raise UnsupportedFirmwareException(
+                    "Client blocking is not supported by this test on legacy firmware"
+                )
+
+            key = mac.replace("-", ":").upper()
+            if (key in await self._async_get_blocked_clients()) == blocked:
+                return False
+
+            wire_mac = key.replace(":", "-")
+            clients = (
+                [
+                    {
+                        "mac": wire_mac,
+                        "name": base64.b64encode(name.encode()).decode(),
+                        "client_type": "other",
+                    }
+                ]
+                if blocked
+                else [wire_mac]
+            )
+            # A timed-out write may already have reached the Deco. Do not retry it.
+            await self._async_client_blocklist_request(
+                {
+                    "operation": "block" if blocked else "unblock",
+                    "params": {"client_list": clients},
+                }
+            )
+            if (key in await self._async_get_blocked_clients()) != blocked:
+                raise UnexpectedApiException(
+                    "Deco did not confirm the block list change"
+                )
+            return True
+
+    async def async_get_blocked_clients(self) -> dict[str, str | None]:
+        """Read the local block list without modifying it."""
+        async with self._operation_lock:
+            await self.async_login_if_needed()
+            if self._outer_id is not None:
+                raise UnsupportedFirmwareException(
+                    "Client blocking is not supported by this test on legacy firmware"
+                )
+            return await self._async_get_blocked_clients()
+
+    async def _async_get_blocked_clients(self) -> dict[str, str | None]:
+        response = await self._async_client_blocklist_request({"operation": "list"})
+        result = response.get("result")
+        clients = result.get("client_list") if isinstance(result, dict) else None
+        if clients == {}:
+            return {}  # Some firmware returns an empty object instead of a list.
+        if not isinstance(clients, list) or any(
+            not isinstance(client, dict)
+            or not isinstance(client.get("mac"), str)
+            or not re.fullmatch(
+                r"[0-9A-Fa-f]{12}", client["mac"].replace("-", "").replace(":", "")
+            )
+            for client in clients
+        ):
+            raise UnexpectedApiException("Deco returned an invalid blocked client list")
+        blocked_clients = {}
+        for client in clients:
+            mac = client["mac"].replace("-", "").replace(":", "").upper()
+            mac = ":".join(mac[i : i + 2] for i in range(0, len(mac), 2))
+            name = client.get("name")
+            blocked_clients[mac] = (
+                decode_name_with_fallback(name) if isinstance(name, str) else None
+            )
+        return blocked_clients
+
+    async def _async_client_blocklist_request(self, payload: dict) -> dict:
+        context = "Client block list"
+        response = await self._async_post(
+            context,
+            f"{self._host}/cgi-bin/luci/;stok={self._stok}/admin/client",
+            params={"form": "black_list"},
+            data=self._encode_payload(payload),
+        )
+        data = (
+            self._decrypt_data(context, response["data"])
+            if "data" in response
+            else response
+        )
+        if not isinstance(data, dict):
+            raise UnexpectedApiException("Deco returned an invalid block list response")
+        self._check_authenticated_data_error_code(context, data)
+        return data
+
     def _generate_aes_key_and_iv(self):
         # TPLink requires key and IV to be a 16 digit number (no leading 0s)
         self._aes_key = secrets.randbelow(MAX_AES_KEY - MIN_AES_KEY) + MIN_AES_KEY

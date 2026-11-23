@@ -6,6 +6,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .client_controls import DecoClientAccessButton
+from .client_controls import DecoClientAccessRefreshButton
+from .const import CLIENT_BLOCK_CONTROLS_KEY
 from .const import COORDINATOR_DECOS_KEY
 from .const import DOMAIN
 from .device import create_device_info
@@ -17,8 +20,17 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up TP-Link Deco buttons."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id][COORDINATOR_DECOS_KEY]
-    async_add_entities([DecoRefreshStatusButton(coordinator)])
+    data = hass.data[DOMAIN][config_entry.entry_id]
+    entities = [DecoRefreshStatusButton(data[COORDINATOR_DECOS_KEY])]
+    if (controls := data.get(CLIENT_BLOCK_CONTROLS_KEY)) is not None:
+        entities.extend(
+            [
+                DecoClientAccessButton(controls, True),
+                DecoClientAccessButton(controls, False),
+                DecoClientAccessRefreshButton(controls),
+            ]
+        )
+    async_add_entities(entities)
 
 
 class DecoRefreshStatusButton(ButtonEntity):

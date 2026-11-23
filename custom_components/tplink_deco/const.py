@@ -12,6 +12,7 @@ COORDINATOR_DECOS_KEY = "decos"
 COORDINATOR_MOBILE_KEY = "mobile_data"
 COORDINATOR_WIRELESS_KEY = "wireless"
 SYSLOG_FORWARDER_KEY = "syslog_forwarder"
+CLIENT_BLOCK_CONTROLS_KEY = "client_block_controls"
 
 DEFAULT_CONSIDER_HOME = DEFAULT_CONSIDER_HOME_SPAN.total_seconds()
 DEFAULT_DECO_POSTFIX = "Deco"
@@ -61,6 +62,7 @@ CONF_DECO_PREFIX = "deco_prefix"
 CONF_DECO_POSTFIX = "deco_postfix"
 CONF_DEVICE_LIST_INTERVAL = "device_list_interval"
 CONF_ENABLE_NEW_CLIENT_TRACKERS = "enable_new_client_trackers"
+CONF_EXPERIMENTAL_CLIENT_BLOCK_CONTROLS = "experimental_client_block_controls"
 CONF_EXPOSE_WIFI_SSIDS = "expose_wifi_ssids"
 CONF_LINK_CLIENT_DEVICES = "link_client_devices"
 CONF_SYSLOG_ENABLED = "syslog_enabled"
@@ -82,6 +84,7 @@ SERVICE_REBOOT_DECO = "reboot_deco"
 SERVICE_PAUSE_POLLING = "pause_polling"
 SERVICE_RESUME_POLLING = "resume_polling"
 SERVICE_DOWNLOAD_SYSTEM_LOG = "download_system_log"
+SERVICE_SET_CLIENT_BLOCKED = "set_client_blocked"
 # Platforms
 PLATFORMS = [
     "device_tracker",

@@ -24,7 +24,9 @@ class FakeServices:
     def __init__(self):
         self.handlers = {}
 
-    def async_register(self, domain, service, handler, schema, supports_response):
+    def async_register(
+        self, domain, service, handler, schema, supports_response, **kwargs
+    ):
         self.handlers[(domain, service)] = (handler, schema)
 
     def async_remove(self, domain, service):

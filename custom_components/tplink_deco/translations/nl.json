@@ -1,4 +1,14 @@
 {
+  "entity": {
+    "select": {
+      "client_access": { "name": "Clienttoegang" }
+    },
+    "button": {
+      "block_client": { "name": "Client blokkeren" },
+      "unblock_client": { "name": "Client deblokkeren" },
+      "refresh_client_block_list": { "name": "Clientblokkeerlijst vernieuwen" }
+    }
+  },
   "config": {
     "step": {
       "user": {
@@ -11,6 +21,7 @@
           "device_list_interval": "Aantal seconden tussen Deco-statusupdates (0 schakelt automatische updates na het opstarten uit)",
           "link_client_devices": "Koppel clienttrackers via het MAC-adres aan apparaten",
           "enable_new_client_trackers": "Trackers voor nieuwe clients inschakelen",
+          "experimental_client_block_controls": "Toon experimentele clientblokkering",
           "expose_wifi_ssids": "Toon wifi-netwerknamen op de wifi-statussensoren",
           "interval_seconds": "Aantal seconden tussen updates",
           "consider_home": "Aantal seconden sinds laatste keer dat het gezien is totdat een device als niet-thuis wordt gemarkeerd"
@@ -43,6 +54,7 @@
           "device_list_interval": "Aantal seconden tussen Deco-statusupdates (0 schakelt automatische updates na het opstarten uit)",
           "link_client_devices": "Koppel clienttrackers via het MAC-adres aan apparaten",
           "enable_new_client_trackers": "Trackers voor nieuwe clients inschakelen",
+          "experimental_client_block_controls": "Toon experimentele clientblokkering",
           "expose_wifi_ssids": "Toon wifi-netwerknamen op de wifi-statussensoren",
           "interval_seconds": "Aantal seconden tussen updates",
           "consider_home": "Aantal seconden sinds laatste keer dat het gezien is totdat een device als niet-thuis wordt gemarkeerd"

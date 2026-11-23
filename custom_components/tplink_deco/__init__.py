@@ -33,7 +33,9 @@ import voluptuous as vol
 
 from .api import TplinkDecoApi
 from .api import normalize_name
+from .client_controls import async_setup_client_block_controls
 from .const import ATTR_DEVICE_TYPE
+from .const import CLIENT_BLOCK_CONTROLS_KEY
 from .const import CONF_CLIENT_POSTFIX
 from .const import CONF_CLIENT_PREFIX
 from .const import CONF_DECO_POSTFIX
@@ -285,6 +287,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     clients_coordinator = data[COORDINATOR_CLIENTS_KEY]
     mobile_coordinator = data[COORDINATOR_MOBILE_KEY]
     wireless_coordinator = data[COORDINATOR_WIRELESS_KEY]
+
+    controls = await async_setup_client_block_controls(hass, config_entry, data)
+    if controls is not None:
+        data[CLIENT_BLOCK_CONTROLS_KEY] = controls
 
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
