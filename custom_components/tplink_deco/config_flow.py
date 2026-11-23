@@ -26,6 +26,7 @@ from .const import CONF_DECO_PREFIX
 from .const import CONF_DEVICE_LIST_INTERVAL
 from .const import CONF_ENABLE_NEW_CLIENT_TRACKERS
 from .const import CONF_EXPERIMENTAL_CLIENT_BLOCK_CONTROLS
+from .const import CONF_EXPERIMENTAL_CLIENT_RENAME_CONTROLS
 from .const import CONF_EXPOSE_WIFI_SSIDS
 from .const import CONF_LINK_CLIENT_DEVICES
 from .const import CONF_SYSLOG_ENABLED
@@ -171,6 +172,10 @@ def _get_schema(data: dict[str:Any]):
             vol.Required(
                 CONF_EXPERIMENTAL_CLIENT_BLOCK_CONTROLS,
                 default=data.get(CONF_EXPERIMENTAL_CLIENT_BLOCK_CONTROLS, False),
+            ): bool,
+            vol.Required(
+                CONF_EXPERIMENTAL_CLIENT_RENAME_CONTROLS,
+                default=data.get(CONF_EXPERIMENTAL_CLIENT_RENAME_CONTROLS, False),
             ): bool,
             vol.Required(
                 CONF_EXPOSE_WIFI_SSIDS,

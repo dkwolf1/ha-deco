@@ -1,9 +1,34 @@
 {
+  "entity": {
+    "select": {
+      "client_access": {
+        "name": "Klientåtkomst: 1. Välj klient",
+        "state": { "select_client": "Välj en klient" }
+      },
+      "client_to_rename": {
+        "name": "Klientnamn: 1. Välj klient",
+        "state": { "select_client": "Välj en klient" }
+      }
+    },
+    "text": {
+      "new_client_name": { "name": "Klientnamn: 2. Nytt namn" }
+    },
+    "button": {
+      "block_client": { "name": "Klientåtkomst: 2. Blockera" },
+      "unblock_client": { "name": "Klientåtkomst: 3. Avblockera" },
+      "refresh_client_block_list": {
+        "name": "Klientåtkomst: 4. Uppdatera listan"
+      },
+      "rename_client": { "name": "Klientnamn: 3. Verkställ" }
+    }
+  },
   "config": {
     "step": {
       "user": {
         "description": "Använd användaruppgifterna för webbportalen. Följ instruktioner enligt sidan https://github.com/dkwolf1/ha-deco#configuration-important-please-read",
         "data": {
+          "experimental_client_block_controls": "Visa experimentella reglage för klientblockering",
+          "experimental_client_rename_controls": "Visa experimentella reglage för att byta klientnamn",
           "host": "Värd",
           "username": "Användarnamn",
           "password": "Lösenord",
@@ -41,6 +66,8 @@
       "init": {
         "description": "Använd användaruppgifterna för webbportalen. Följ instruktioner enligt sidan https://github.com/dkwolf1/ha-deco#configuration-important-please-read",
         "data": {
+          "experimental_client_block_controls": "Visa experimentella reglage för klientblockering",
+          "experimental_client_rename_controls": "Visa experimentella reglage för att byta klientnamn",
           "host": "Värd",
           "username": "Användarnamn",
           "password": "Lösenord",

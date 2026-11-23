@@ -6,7 +6,9 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .client_controls import DecoClientAccessSelect
+from .client_controls import DecoClientRenameSelect
 from .const import CLIENT_BLOCK_CONTROLS_KEY
+from .const import CLIENT_RENAME_CONTROLS_KEY
 from .const import COORDINATOR_DECOS_KEY
 from .const import DOMAIN
 from .device import create_device_info
@@ -25,6 +27,8 @@ async def async_setup_entry(
     entities = [DecoPollingIntervalSelect(hass, config_entry, coordinator)]
     if (controls := data.get(CLIENT_BLOCK_CONTROLS_KEY)) is not None:
         entities.append(DecoClientAccessSelect(controls))
+    if (rename_controls := data.get(CLIENT_RENAME_CONTROLS_KEY)) is not None:
+        entities.append(DecoClientRenameSelect(rename_controls))
     async_add_entities(entities)
 
 

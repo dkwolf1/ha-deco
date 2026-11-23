@@ -1,12 +1,23 @@
 {
   "entity": {
     "select": {
-      "client_access": { "name": "Clienttoegang" }
+      "client_access": {
+        "name": "Blokkering: 1. Client kiezen",
+        "state": { "select_client": "Kies een client" }
+      },
+      "client_to_rename": {
+        "name": "Clientnaam: 1. Client kiezen",
+        "state": { "select_client": "Kies een client" }
+      }
+    },
+    "text": {
+      "new_client_name": { "name": "Clientnaam: 2. Nieuwe naam" }
     },
     "button": {
-      "block_client": { "name": "Client blokkeren" },
-      "unblock_client": { "name": "Client deblokkeren" },
-      "refresh_client_block_list": { "name": "Clientblokkeerlijst vernieuwen" }
+      "block_client": { "name": "Blokkering: 2. Blokkeren" },
+      "unblock_client": { "name": "Blokkering: 3. Deblokkeren" },
+      "refresh_client_block_list": { "name": "Blokkering: 4. Lijst verversen" },
+      "rename_client": { "name": "Clientnaam: 3. Hernoemen" }
     }
   },
   "config": {
@@ -22,6 +33,7 @@
           "link_client_devices": "Koppel clienttrackers via het MAC-adres aan apparaten",
           "enable_new_client_trackers": "Trackers voor nieuwe clients inschakelen",
           "experimental_client_block_controls": "Toon experimentele clientblokkering",
+          "experimental_client_rename_controls": "Toon experimentele bediening voor client hernoemen",
           "expose_wifi_ssids": "Toon wifi-netwerknamen op de wifi-statussensoren",
           "interval_seconds": "Aantal seconden tussen updates",
           "consider_home": "Aantal seconden sinds laatste keer dat het gezien is totdat een device als niet-thuis wordt gemarkeerd"
@@ -55,6 +67,7 @@
           "link_client_devices": "Koppel clienttrackers via het MAC-adres aan apparaten",
           "enable_new_client_trackers": "Trackers voor nieuwe clients inschakelen",
           "experimental_client_block_controls": "Toon experimentele clientblokkering",
+          "experimental_client_rename_controls": "Toon experimentele bediening voor client hernoemen",
           "expose_wifi_ssids": "Toon wifi-netwerknamen op de wifi-statussensoren",
           "interval_seconds": "Aantal seconden tussen updates",
           "consider_home": "Aantal seconden sinds laatste keer dat het gezien is totdat een device als niet-thuis wordt gemarkeerd"

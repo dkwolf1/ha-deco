@@ -58,10 +58,12 @@ async def test_blocked_client_stays_selectable_and_uses_admin_action(setup):
     with patch.object(client_controls, "async_dispatcher_send"):
         controls = await client_controls.async_setup_client_block_controls(*setup)
         select = client_controls.DecoClientAccessSelect(controls)
+        select.hass = hass
         unblock = client_controls.DecoClientAccessButton(controls, False)
         unblock.hass = hass
         hass.services.async_call = AsyncMock()
-        assert select.current_option is None
+        assert select.current_option == client_controls.NO_CLIENT_SELECTED
+        assert select.options[0] == client_controls.NO_CLIENT_SELECTED
         assert not unblock.available
         with pytest.raises(ServiceValidationError, match="Select a Deco client"):
             await unblock.async_press()
@@ -82,6 +84,13 @@ async def test_blocked_client_stays_selectable_and_uses_admin_action(setup):
         )
         controls.apply_verified_state(BLOCKED, False, "Offline laptop")
         assert select.current_option.endswith(" - not blocked")
+        read.reset_mock()
+        await select.async_select_option(client_controls.NO_CLIENT_SELECTED)
+        assert select.current_option == client_controls.NO_CLIENT_SELECTED
+        assert not unblock.available
+        assert not client_controls.DecoClientAccessButton(controls, True).available
+        read.assert_not_awaited()
+        hass.services.async_call.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -95,5 +104,5 @@ async def test_non_admin_cannot_change_shared_selection(setup):
     select.async_set_context(Context(user_id="guest"))
     hass.auth.async_get_user = AsyncMock(return_value=SimpleNamespace(is_admin=False))
     with pytest.raises(Unauthorized):
-        await select.async_select_option(select.options[0])
+        await select.async_select_option(select.options[1])
     assert controls.selected_mac is None

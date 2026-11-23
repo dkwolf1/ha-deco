@@ -34,8 +34,10 @@ import voluptuous as vol
 from .api import TplinkDecoApi
 from .api import normalize_name
 from .client_controls import async_setup_client_block_controls
+from .client_controls import async_setup_client_rename_controls
 from .const import ATTR_DEVICE_TYPE
 from .const import CLIENT_BLOCK_CONTROLS_KEY
+from .const import CLIENT_RENAME_CONTROLS_KEY
 from .const import CONF_CLIENT_POSTFIX
 from .const import CONF_CLIENT_PREFIX
 from .const import CONF_DECO_POSTFIX
@@ -291,6 +293,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     controls = await async_setup_client_block_controls(hass, config_entry, data)
     if controls is not None:
         data[CLIENT_BLOCK_CONTROLS_KEY] = controls
+    if (
+        rename_controls := async_setup_client_rename_controls(hass, config_entry, data)
+    ) is not None:
+        data[CLIENT_RENAME_CONTROLS_KEY] = rename_controls
 
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 

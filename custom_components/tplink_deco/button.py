@@ -8,7 +8,9 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .client_controls import DecoClientAccessButton
 from .client_controls import DecoClientAccessRefreshButton
+from .client_controls import DecoClientRenameButton
 from .const import CLIENT_BLOCK_CONTROLS_KEY
+from .const import CLIENT_RENAME_CONTROLS_KEY
 from .const import COORDINATOR_DECOS_KEY
 from .const import DOMAIN
 from .device import create_device_info
@@ -30,6 +32,8 @@ async def async_setup_entry(
                 DecoClientAccessRefreshButton(controls),
             ]
         )
+    if (rename_controls := data.get(CLIENT_RENAME_CONTROLS_KEY)) is not None:
+        entities.append(DecoClientRenameButton(rename_controls))
     async_add_entities(entities)
 
 

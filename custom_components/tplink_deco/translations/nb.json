@@ -1,9 +1,34 @@
 {
+  "entity": {
+    "select": {
+      "client_access": {
+        "name": "Klienttilgang: 1. Velg klient",
+        "state": { "select_client": "Velg en klient" }
+      },
+      "client_to_rename": {
+        "name": "Klientnavn: 1. Velg klient",
+        "state": { "select_client": "Velg en klient" }
+      }
+    },
+    "text": {
+      "new_client_name": { "name": "Klientnavn: 2. Nytt navn" }
+    },
+    "button": {
+      "block_client": { "name": "Klienttilgang: 2. Blokker" },
+      "unblock_client": { "name": "Klienttilgang: 3. Opphev blokkering" },
+      "refresh_client_block_list": {
+        "name": "Klienttilgang: 4. Oppdater listen"
+      },
+      "rename_client": { "name": "Klientnavn: 3. Bruk" }
+    }
+  },
   "config": {
     "step": {
       "user": {
         "title": "TP-Link Deco",
         "data": {
+          "experimental_client_block_controls": "Vis eksperimentelle kontroller for klientblokkering",
+          "experimental_client_rename_controls": "Vis eksperimentelle kontroller for å endre klientnavn",
           "username": "Brukernavn",
           "password": "Passord"
         }
@@ -23,6 +48,8 @@
       "init": {
         "title": "TP-Link Deco",
         "data": {
+          "experimental_client_block_controls": "Vis eksperimentelle kontroller for klientblokkering",
+          "experimental_client_rename_controls": "Vis eksperimentelle kontroller for å endre klientnavn",
           "username": "Brukernavn",
           "password": "Passord"
         }

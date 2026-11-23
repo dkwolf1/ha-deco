@@ -1,10 +1,35 @@
 {
+  "entity": {
+    "select": {
+      "client_access": {
+        "name": "Acesso de clientes: 1. Escolher cliente",
+        "state": { "select_client": "Escolher um cliente" }
+      },
+      "client_to_rename": {
+        "name": "Nome do cliente: 1. Escolher cliente",
+        "state": { "select_client": "Escolher um cliente" }
+      }
+    },
+    "text": {
+      "new_client_name": { "name": "Nome do cliente: 2. Novo nome" }
+    },
+    "button": {
+      "block_client": { "name": "Acesso de clientes: 2. Bloquear" },
+      "unblock_client": { "name": "Acesso de clientes: 3. Desbloquear" },
+      "refresh_client_block_list": {
+        "name": "Acesso de clientes: 4. Atualizar lista"
+      },
+      "rename_client": { "name": "Nome do cliente: 3. Aplicar" }
+    }
+  },
   "config": {
     "step": {
       "user": {
         "title": "TP-Link Deco",
         "description": "Use as credenciais para o portal da Web do administrador. Veja https://github.com/dkwolf1/ha-deco#configuration-important-please-read",
         "data": {
+          "experimental_client_block_controls": "Mostrar controles experimentais de bloqueio de clientes",
+          "experimental_client_rename_controls": "Mostrar controles experimentais para alterar nomes de clientes",
           "host": "Host",
           "username": "Nome de usuário",
           "password": "Senha",
@@ -28,10 +53,12 @@
   },
   "options": {
     "step": {
-      "user": {
+      "init": {
         "title": "TP-Link Deco",
         "description": "Use as credenciais para o portal da Web do administrador. Veja https://github.com/dkwolf1/ha-deco#configuration-important-please-read",
         "data": {
+          "experimental_client_block_controls": "Mostrar controles experimentais de bloqueio de clientes",
+          "experimental_client_rename_controls": "Mostrar controles experimentais para alterar nomes de clientes",
           "host": "Host",
           "username": "Nome de usuário",
           "password": "Senha",

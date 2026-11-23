@@ -35,6 +35,29 @@ set_client_blocked:
       required: true
       selector:
         boolean:
+rename_client:
+  name: Rename client (experimental)
+  description: >-
+    Change one connected client's name on the Deco. Requires an administrator
+    and supported firmware. The Home Assistant entity ID is not changed.
+  fields:
+    config_entry_id:
+      name: Deco
+      description: Required when more than one Deco integration entry is loaded.
+      selector:
+        config_entry:
+          integration: tplink_deco
+    mac:
+      name: Client MAC address
+      required: true
+      selector:
+        text:
+    name:
+      name: New name
+      description: A printable name, up to 32 UTF-8 bytes.
+      required: true
+      selector:
+        text:
 download_system_log:
   name: Download system log
   description: >-
