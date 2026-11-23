@@ -152,12 +152,15 @@ reliable across Deco models and firmware versions.
 ### Client blocking and unblocking
 
 Starting with v4.0.0, Home Assistant administrators can manage the Deco block
-list for individual clients on supported firmware. To show the controls, enable
-**Show experimental client blocking controls** in the Deco integration options
-and open the main Deco device. Select a client, then choose **Block client** or
-**Unblock client**. Use **Refresh client block list** after changes in the Deco app.
+list for individual clients on supported firmware. Open **Settings > Devices &
+services > TP-Link Deco**, then the options for the intended Deco entry. Enable
+**Show experimental client blocking controls** and save. Open the **main Deco**
+device (not the client device), select a client under **Controls > Client access**,
+then choose **Block client** or **Unblock client**. Use **Refresh client block list**
+after changes in the Deco app.
 
-The controls are off by default and were tested on a Deco X50. Block list
+The controls are off by default and were tested on a Deco X50. Updating an
+existing installation of this repository to v4.0.0 requires no migration. Block list
 membership describes the Deco rule, not whether a local service on that client
 is reachable. Start with a device you can safely disconnect. See the
 [client access guide](https://github.com/dkwolf1/ha-deco/wiki/Entities-and-Actions#client-access-experimental)
@@ -227,6 +230,7 @@ warning and stops forwarding until it's reloaded.
 - `tplink_deco.resume_polling`
 - `tplink_deco.reboot_deco`
 - `tplink_deco.download_system_log`
+- `tplink_deco.set_client_blocked` (experimental; administrator only)
 
 ---
 
