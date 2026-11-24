@@ -294,10 +294,10 @@ class TplinkDecoDeviceTracker(CoordinatorEntity, RestoreEntity, ScannerEntity):
             ATTR_SIGNAL_BAND5: self._deco.signal_band5,
             ATTR_SW_VERSION: self._attr_sw_version,
         }
-        master = self.coordinator.data.master_deco
-        if master and not self._deco.master:
-            attributes[ATTR_DECO_DEVICE] = master.name
-            attributes[ATTR_DECO_MAC] = master.mac
+        data = self.coordinator.data
+        if (uplink_mac := data.uplinks.get(self._deco.mac)) is not None:
+            attributes[ATTR_DECO_DEVICE] = data.decos[uplink_mac].name
+            attributes[ATTR_DECO_MAC] = uplink_mac
 
         return attributes
 
