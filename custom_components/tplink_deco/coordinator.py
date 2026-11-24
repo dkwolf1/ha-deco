@@ -6,6 +6,7 @@ from datetime import datetime
 from datetime import timedelta
 import ipaddress
 import logging
+import re
 from time import monotonic
 from typing import Any
 
@@ -119,6 +120,8 @@ class TpLinkDeco:
         self.master = None
         self.connection_type = None
         self.interface = None
+        self.device_id: str | None = None
+        self.parent_device_id: str | None = None
         self.bssid_band2_4 = None
         self.bssid_band5 = None
         self.backhaul_bssid_band2_4 = None
@@ -159,6 +162,8 @@ class TpLinkDeco:
             self.internet_online = bool(inet)
         self.master = data.get("role") == "master"
         self.connection_type = data.get("connection_type")
+        self.device_id = _topology_id(data.get("device_id"))
+        self.parent_device_id = _topology_id(data.get("parent_device_id"))
         self.bssid_band2_4 = data.get("bssid_2g")
         self.bssid_band5 = data.get("bssid_5g")
         self.backhaul_bssid_band2_4 = data.get("bssid_sta_2g")
@@ -168,6 +173,80 @@ class TpLinkDeco:
         self.signal_band5 = signal_level.get("band5")
         self.backhaul_speed = data.get("backhual_speed")
         self.backhaul_max_speed = data.get("backhual_max_speed")
+
+
+def _topology_id(value: object) -> str | None:
+    return (value.strip() or None) if isinstance(value, str) else None
+
+
+def _normalized_bssid(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    mac = value.strip().replace(":", "").replace("-", "").lower()
+    if (
+        not re.fullmatch(r"[0-9a-f]{12}", mac)
+        or mac == "000000000000"
+        or int(mac[:2], 16) & 1
+    ):
+        return None
+    return mac
+
+
+def _find_uplink(deco: TpLinkDeco, connected: list[TpLinkDeco]) -> str | None:
+    if deco.parent_device_id is not None:
+        parents = [
+            peer.mac for peer in connected if peer.device_id == deco.parent_device_id
+        ]
+        if parents:
+            return parents[0] if len(parents) == 1 and parents[0] != deco.mac else None
+
+    connection_types = deco.connection_type
+    if not isinstance(connection_types, list):
+        connection_types = [connection_types]
+    if any(
+        isinstance(value, str) and value.strip().lower() in {"wired", "ethernet"}
+        for value in connection_types
+    ):
+        return None
+
+    exact = set()
+    suffix = set()
+    for station_attr, peer_attr in (
+        ("backhaul_bssid_band2_4", "bssid_band2_4"),
+        ("backhaul_bssid_band5", "bssid_band5"),
+    ):
+        if (station := _normalized_bssid(getattr(deco, station_attr))) is None:
+            continue
+        for peer in connected:
+            if peer.mac == deco.mac:
+                continue
+            bssid = _normalized_bssid(getattr(peer, peer_attr))
+            if bssid == station:
+                exact.add(peer.mac)
+            elif bssid is not None and bssid[2:] == station[2:]:
+                suffix.add(peer.mac)
+    matches = exact or suffix
+    return next(iter(matches)) if len(matches) == 1 else None
+
+
+def _resolve_deco_uplinks(decos: dict[str, TpLinkDeco]) -> dict[str, str]:
+    """Resolve uplinks from one snapshot without inventing links for offline nodes."""
+    connected = [deco for deco in decos.values() if deco.online]
+    uplinks = {
+        deco.mac: uplink
+        for deco in connected
+        if not deco.master and (uplink := _find_uplink(deco, connected)) is not None
+    }
+    # Conflicting snapshots must not produce loops in topology consumers.
+    cyclic_nodes = set()
+    for node in uplinks:
+        path = []
+        while node in uplinks and node not in path:
+            path.append(node)
+            node = uplinks[node]
+        if node in path:
+            cyclic_nodes.update(path[path.index(node) :])
+    return {mac: uplink for mac, uplink in uplinks.items() if mac not in cyclic_nodes}
 
 
 class TpLinkDecoClient:
@@ -212,6 +291,7 @@ class TpLinkDecoData:
     ) -> None:
         self.master_deco = master_deco
         self.decos = {} if decos is None else decos
+        self.uplinks = _resolve_deco_uplinks(self.decos)
 
 
 class TplinkDecoUpdateCoordinator(DataUpdateCoordinator):
