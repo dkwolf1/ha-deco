@@ -7,6 +7,7 @@ from typing import Callable
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import SensorEntityDescription
+from homeassistant.components.sensor.const import DOMAIN as SENSOR_DOMAIN
 from homeassistant.components.sensor.const import SensorDeviceClass
 from homeassistant.components.sensor.const import SensorStateClass
 from homeassistant.config_entries import ConfigEntry
@@ -16,6 +17,7 @@ from homeassistant.const import UnitOfInformation
 from homeassistant.const import UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.core import callback
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -49,6 +51,15 @@ class TplinkCoordinatorHealthSensorDescription(SensorEntityDescription):
     value_fn: Callable[[Any], Any]
 
 
+def _backhaul_type(deco: TpLinkDeco) -> str | None:
+    value = deco.connection_type
+    values = value if isinstance(value, list) else [value]
+    bands = ", ".join(
+        band.strip() for band in values if isinstance(band, str) and band.strip()
+    )
+    return bands or None
+
+
 DIAGNOSTIC_SENSOR_DESCRIPTIONS: tuple[TplinkDecoDiagnosticSensorDescription, ...] = (
     TplinkDecoDiagnosticSensorDescription(
         key="ip_address",
@@ -76,11 +87,7 @@ DIAGNOSTIC_SENSOR_DESCRIPTIONS: tuple[TplinkDecoDiagnosticSensorDescription, ...
         name="Backhaul type",
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
-        value_fn=lambda deco: (
-            deco.connection_type[0]
-            if isinstance(deco.connection_type, list) and deco.connection_type
-            else deco.connection_type
-        ),
+        value_fn=_backhaul_type,
     ),
     TplinkDecoDiagnosticSensorDescription(
         key="backhaul_speed",
@@ -223,9 +230,11 @@ async def async_setup_entry(
     coordinator_decos = data[COORDINATOR_DECOS_KEY]
     coordinator_clients = data[COORDINATOR_CLIENTS_KEY]
     coordinator_mobile = data[COORDINATOR_MOBILE_KEY]
+    registry = er.async_get(hass)
 
     def add_sensors_for_deco(
         deco: TpLinkDeco | None,
+        directions: tuple[str, ...] = ("down", "up"),
     ):
         name_prefix = "Total" if deco is None else deco.name
         unique_id_prefix = (
@@ -238,19 +247,12 @@ async def async_setup_entry(
             TplinkTotalClientDataRateSensor(
                 coordinator_decos,
                 coordinator_clients,
-                f"{name_prefix} Down",
-                f"{unique_id_prefix}_down",
-                "down_kilobytes_per_s",
+                f"{name_prefix} {direction.title()}",
+                f"{unique_id_prefix}_{direction}",
+                f"{direction}_kilobytes_per_s",
                 deco,
-            ),
-            TplinkTotalClientDataRateSensor(
-                coordinator_decos,
-                coordinator_clients,
-                f"{name_prefix} Up",
-                f"{unique_id_prefix}_up",
-                "up_kilobytes_per_s",
-                deco,
-            ),
+            )
+            for direction in directions
         ]
 
         if deco is not None:
@@ -272,29 +274,56 @@ async def async_setup_entry(
 
     tracked_decos = set()
     client_count_tracked_decos = set()
-    total_added = False
+    totals_added: set[str] = set()
+    health_added = False
 
     @callback
-    def add_untracked_deco_sensors():
-        """Add new tracker entities for decos (and the total sensors)."""
-        nonlocal total_added
+    def add_master_sensors():
+        """Add master diagnostics and the applicable throughput totals."""
+        nonlocal health_added
+        master = coordinator_decos.data.master_deco
+        if master is None:
+            return
 
-        # The "Total" sensors need the master Deco for their unique id / device.
-        # It may not be known on the first refresh (e.g. a satellite-only entry),
-        # so (re)try adding them whenever decos are discovered.
-        if not total_added and coordinator_decos.data.master_deco is not None:
-            add_sensors_for_deco(None)  # Total sensors
-            master_deco = coordinator_decos.data.master_deco
+        if not health_added:
             async_add_entities(
                 TplinkCoordinatorHealthSensor(
                     coordinator_decos,
                     data[description.coordinator_key],
-                    master_deco.mac,
+                    master.mac,
                     description,
                 )
                 for description in COORDINATOR_HEALTH_SENSOR_DESCRIPTIONS
             )
-            total_added = True
+            health_added = True
+
+        if len(totals_added) == 2:
+            return
+        has_satellite = any(
+            mac != master.mac and not deco.master
+            for mac, deco in coordinator_decos.data.decos.items()
+        )
+        directions = []
+        for direction in ("down", "up"):
+            if direction in totals_added:
+                continue
+            if not has_satellite:
+                # Keep registered totals usable after upgrading a standalone setup.
+                entity_id = registry.async_get_entity_id(
+                    SENSOR_DOMAIN, DOMAIN, f"{master.mac}_total_{direction}"
+                )
+                existing = registry.async_get(entity_id) if entity_id else None
+                if existing is None or existing.config_entry_id != entry.entry_id:
+                    continue
+            directions.append(direction)
+        if directions:
+            add_sensors_for_deco(None, tuple(directions))
+            totals_added.update(directions)
+
+    @callback
+    def add_untracked_deco_sensors():
+        """Add sensor entities for newly discovered Decos."""
+        add_master_sensors()
 
         for mac, deco in coordinator_decos.data.decos.items():
             if mac in tracked_decos:
@@ -339,6 +368,7 @@ async def async_setup_entry(
     coordinator_decos.on_close(
         async_dispatcher_connect(hass, SIGNAL_DECO_ADDED, add_untracked_deco_sensors)
     )
+    entry.async_on_unload(coordinator_decos.async_add_listener(add_master_sensors))
 
     mobile_data_sensor_added = False
 
