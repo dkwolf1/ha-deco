@@ -1,5 +1,19 @@
 {
   "entity": {
+    "sensor": {
+      "wifi_channel": { "name": "Wifi-kanaal {band}" },
+      "wifi_channel_width": { "name": "Wifi-kanaalbreedte {band}" },
+      "wifi_optimization_advice": {
+        "name": "Wifi-optimalisatieadvies",
+        "state": {
+          "optimal": "Geen optimalisatie nodig",
+          "optimizable": "Optimalisatie aanbevolen",
+          "scanning": "Scanverzoek in behandeling",
+          "confirm_optimization": "Druk opnieuw op Optimaliseren om te bevestigen",
+          "optimizing": "Optimalisatie in behandeling"
+        }
+      }
+    },
     "select": {
       "client_access": {
         "name": "Blokkering: 1. Client kiezen",
@@ -14,10 +28,23 @@
       "new_client_name": { "name": "Clientnaam: 2. Nieuwe naam" }
     },
     "button": {
+      "wifi_scan": { "name": "Wifi scannen (test)" },
+      "wifi_optimize": { "name": "Wifi optimaliseren (test)" },
       "block_client": { "name": "Blokkering: 2. Blokkeren" },
       "unblock_client": { "name": "Blokkering: 3. Deblokkeren" },
       "refresh_client_block_list": { "name": "Blokkering: 4. Lijst verversen" },
       "rename_client": { "name": "Clientnaam: 3. Hernoemen" }
+    }
+  },
+  "exceptions": {
+    "wifi_optimization_busy": {
+      "message": "De hoofd-Deco is niet beschikbaar of er loopt al een wifi-actie."
+    },
+    "wifi_optimization_not_recommended": {
+      "message": "De Deco adviseert momenteel geen wifi-optimalisatie. Start indien nodig een scan."
+    },
+    "wifi_optimization_unconfirmed": {
+      "message": "De Deco heeft geen bevestigde uitkomst gegeven. Controleer de status voordat je opnieuw optimaliseert."
     }
   },
   "config": {
@@ -56,10 +83,20 @@
   },
   "options": {
     "step": {
+      "wifi_fingerprint": {
+        "title": "Vertrouw je hoofd-Deco",
+        "description": "Home Assistant heeft de publieke SSH-sleutel van `{host}` opgehaald zonder in te loggen. SHA-256: `{fingerprint}`. Bevestig alleen als dit het adres van je eigen hoofd-Deco is en je het netwerk vertrouwt. Heb je de vingerafdruk al gecontroleerd? Vergelijk die dan met de getoonde waarde.",
+        "data": {
+          "trust_fingerprint": "Vertrouw deze SSH-vingerafdruk"
+        }
+      },
       "init": {
         "title": "TP-Link Deco",
         "description": "Gebruik wachtwoord van de admin web portal. Voor meer informatie, zie https://github.com/dkwolf1/ha-deco#configuration-important-please-read",
         "data": {
+          "experimental_wifi_optimization": "Experimentele wifi-optimalisatie inschakelen",
+          "wifi_optimization_email": "E-mailadres van het TP-Link-eigenaaraccount",
+          "renew_wifi_fingerprint": "SSH-vingerafdruk opnieuw ophalen en bevestigen",
           "host": "Host",
           "username": "Gebruikersnaam",
           "password": "Wachtwoord",
@@ -78,7 +115,11 @@
       "invalid_auth": "Incorrecte authenticatie",
       "timeout_connect": "Timeout tijdens maken van verbinding",
       "unknown": "Onbekende fout",
-      "invalid_device_list_interval": "Vul 0 in om automatische Deco-statusupdates uit te schakelen, of een interval van minstens 10 seconden."
+      "invalid_device_list_interval": "Vul 0 in om automatische Deco-statusupdates uit te schakelen, of een interval van minstens 10 seconden.",
+      "wifi_optimization_email_required": "Vul het e-mailadres van het TP-Link-eigenaaraccount in.",
+      "wifi_fingerprint_unavailable": "Kan de SSH-vingerafdruk niet ophalen. Controleer of het adres naar je hoofd-Deco wijst en of dit model wifi-optimalisatie ondersteunt.",
+      "wifi_fingerprint_dependency_failed": "Home Assistant kon de extra software voor wifi-optimalisatie niet installeren. Controleer de internetverbinding en probeer opnieuw.",
+      "wifi_fingerprint_not_confirmed": "Bevestig de vingerafdruk om wifi-optimalisatie in te schakelen."
     }
   }
 }

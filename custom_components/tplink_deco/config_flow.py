@@ -2,7 +2,9 @@
 
 import asyncio
 import logging
+import re
 from typing import Any
+from urllib.parse import urlsplit
 
 from homeassistant import config_entries
 from homeassistant.components.device_tracker.const import CONF_CONSIDER_HOME
@@ -16,6 +18,8 @@ from homeassistant.core import callback
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import selector
+from homeassistant.requirements import RequirementsNotFound
+from homeassistant.requirements import async_process_requirements
 import voluptuous as vol
 
 from .__init__ import async_create_and_refresh_coordinators
@@ -27,6 +31,7 @@ from .const import CONF_DEVICE_LIST_INTERVAL
 from .const import CONF_ENABLE_NEW_CLIENT_TRACKERS
 from .const import CONF_EXPERIMENTAL_CLIENT_BLOCK_CONTROLS
 from .const import CONF_EXPERIMENTAL_CLIENT_RENAME_CONTROLS
+from .const import CONF_EXPERIMENTAL_WIFI_OPTIMIZATION
 from .const import CONF_EXPOSE_WIFI_SSIDS
 from .const import CONF_LINK_CLIENT_DEVICES
 from .const import CONF_SYSLOG_ENABLED
@@ -38,6 +43,8 @@ from .const import CONF_SYSLOG_PROTOCOL
 from .const import CONF_TIMEOUT_ERROR_RETRIES
 from .const import CONF_TIMEOUT_SECONDS
 from .const import CONF_VERIFY_SSL
+from .const import CONF_WIFI_OPTIMIZATION_EMAIL
+from .const import CONF_WIFI_OPTIMIZATION_FINGERPRINT
 from .const import COORDINATOR_CLIENTS_KEY
 from .const import COORDINATOR_DECOS_KEY
 from .const import COORDINATOR_MOBILE_KEY
@@ -61,10 +68,13 @@ from .const import SYSLOG_PROTOCOL_TCP
 from .const import SYSLOG_PROTOCOL_UDP
 from .exceptions import TimeoutException
 from .system_log import SystemLogLevel
+from .wifi_optimization import TMP_REQUIREMENT
+from .wifi_optimization import read_ssh_fingerprint
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 SCAN_INTERVAL_OPTIONS = [10, 30, 60, 120]
 SCAN_INTERVAL_SELECTOR_OPTIONS = [str(value) for value in SCAN_INTERVAL_OPTIONS]
+RENEW_WIFI_FINGERPRINT = "renew_wifi_fingerprint"
 CONNECTION_SETTINGS = (
     CONF_HOST,
     CONF_USERNAME,
@@ -110,7 +120,7 @@ def _get_auth_schema(data: dict[str:Any]):
     }
 
 
-def _get_schema(data: dict[str:Any]):
+def _get_schema(data: dict[str:Any], *, wifi_options: bool = False):
     if data is None:
         data = {}
     schema = _get_auth_schema(data)
@@ -235,7 +245,38 @@ def _get_schema(data: dict[str:Any]):
             ): vol.All(vol.Coerce(int), vol.Range(min=MIN_SYSLOG_INTERVAL)),
         }
     )
+    if wifi_options:
+        schema.update(
+            {
+                vol.Required(
+                    CONF_EXPERIMENTAL_WIFI_OPTIMIZATION,
+                    default=data.get(CONF_EXPERIMENTAL_WIFI_OPTIMIZATION, False),
+                ): bool,
+                vol.Optional(
+                    CONF_WIFI_OPTIMIZATION_EMAIL,
+                    description={
+                        "suggested_value": data.get(CONF_WIFI_OPTIMIZATION_EMAIL, "")
+                    },
+                ): vol.All(str, vol.Strip),
+                vol.Optional(RENEW_WIFI_FINGERPRINT, default=False): bool,
+            }
+        )
     return schema
+
+
+def _validate_wifi_optimization(data):
+    if not data.get(CONF_EXPERIMENTAL_WIFI_OPTIMIZATION):
+        return {}
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+", data.get(CONF_WIFI_OPTIMIZATION_EMAIL, "")):
+        return {CONF_WIFI_OPTIMIZATION_EMAIL: "wifi_optimization_email_required"}
+    return {}
+
+
+def _wifi_host(data) -> str | None:
+    try:
+        return urlsplit(data.get(CONF_HOST, "")).hostname
+    except ValueError:
+        return None
 
 
 def _validate_syslog(data: dict[str:Any]) -> dict[str, str]:
@@ -359,34 +400,104 @@ class TplinkDecoOptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self, config_entry: ConfigEntry):
         """Initialize HACS options flow."""
         self.data = dict(config_entry.data)
-        self._errors = {}
+        self._original_data = dict(self.data)
+        self._pending_fingerprint: str | None = None
+
+    def _save_options(self):
+        self.hass.config_entries.async_update_entry(
+            entry=self.config_entry,
+            title=self.data[CONF_HOST],
+            data=self.data,
+            options={},
+        )
+        return self.async_create_entry(data={})
+
+    async def async_step_wifi_fingerprint(self, user_input=None):
+        """Require explicit trust before storing the discovered key."""
+        assert self._pending_fingerprint is not None
+        if user_input and user_input.get("trust_fingerprint") is True:
+            self.data[CONF_WIFI_OPTIMIZATION_FINGERPRINT] = self._pending_fingerprint
+            return self._save_options()
+
+        return self.async_show_form(
+            step_id="wifi_fingerprint",
+            data_schema=vol.Schema(
+                {vol.Required("trust_fingerprint", default=False): bool}
+            ),
+            description_placeholders={
+                "host": _wifi_host(self.data),
+                "fingerprint": self._pending_fingerprint,
+            },
+            errors=(
+                {"base": "wifi_fingerprint_not_confirmed"}
+                if user_input is not None
+                else {}
+            ),
+        )
 
     async def async_step_init(self, user_input: dict[str:Any] = None):
         """Handle a flow initialized by the user."""
-        self._errors = {}
+        errors = {}
 
         if user_input is not None:
+            self._pending_fingerprint = None
             _ensure_user_input_optionals(user_input)
             _normalize_intervals(user_input)
+            self.data = {**self._original_data, **user_input}
+            renew_fingerprint = self.data.pop(RENEW_WIFI_FINGERPRINT, False)
             connection_settings_changed = any(
-                user_input.get(key) != self.data.get(key) for key in CONNECTION_SETTINGS
+                self.data.get(key) != self._original_data.get(key)
+                for key in CONNECTION_SETTINGS
             )
-            self.data.update(user_input)
-
-            self._errors = _validate_intervals(self.data) | _validate_syslog(self.data)
-            if connection_settings_changed and not self._errors:
-                self._errors = await _async_test_credentials(self.hass, self.data)
-            if len(self._errors) == 0:
-                self.hass.config_entries.async_update_entry(
-                    entry=self.config_entry,
-                    title=self.data[CONF_HOST],
-                    data=self.data,
-                    options={},
+            host = _wifi_host(self.data)
+            original_host = _wifi_host(self._original_data)
+            fingerprint = self._original_data.get(CONF_WIFI_OPTIMIZATION_FINGERPRINT)
+            self.data.pop(CONF_WIFI_OPTIMIZATION_FINGERPRINT, None)
+            if (
+                host
+                and host == original_host
+                and not (
+                    renew_fingerprint
+                    and self.data.get(CONF_EXPERIMENTAL_WIFI_OPTIMIZATION)
                 )
-                return self.async_create_entry(data={})
+                and re.fullmatch(r"[0-9a-fA-F]{64}", fingerprint or "")
+            ):
+                self.data[CONF_WIFI_OPTIMIZATION_FINGERPRINT] = fingerprint
+
+            errors = (
+                _validate_intervals(self.data)
+                | _validate_syslog(self.data)
+                | _validate_wifi_optimization(self.data)
+            )
+            if connection_settings_changed and not errors:
+                errors = await _async_test_credentials(self.hass, self.data)
+            if not errors:
+                if (
+                    not self.data.get(CONF_EXPERIMENTAL_WIFI_OPTIMIZATION)
+                    or CONF_WIFI_OPTIMIZATION_FINGERPRINT in self.data
+                ):
+                    return self._save_options()
+                if host is None:
+                    errors["base"] = "wifi_fingerprint_unavailable"
+                else:
+                    try:
+                        await async_process_requirements(
+                            self.hass, DOMAIN, [TMP_REQUIREMENT]
+                        )
+                        self._pending_fingerprint = (
+                            await self.hass.async_add_executor_job(
+                                read_ssh_fingerprint, host
+                            )
+                        )
+                    except RequirementsNotFound:
+                        errors["base"] = "wifi_fingerprint_dependency_failed"
+                    except OSError:
+                        errors["base"] = "wifi_fingerprint_unavailable"
+                    else:
+                        return await self.async_step_wifi_fingerprint()
 
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema(_get_schema(self.data)),
-            errors=self._errors,
+            data_schema=vol.Schema(_get_schema(self.data, wifi_options=True)),
+            errors=errors,
         )

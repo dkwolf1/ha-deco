@@ -1,6 +1,7 @@
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity import DeviceInfo
@@ -53,6 +54,8 @@ async def async_setup_entry(
 
 class DecoPollingSwitch(SwitchEntity):
     """Switch to control Deco polling."""
+
+    _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(self, coordinator) -> None:
         self.coordinator = coordinator

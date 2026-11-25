@@ -28,6 +28,14 @@ For a dashboard view of your mesh, see the optional [TP-Link Deco Lovelace card 
 
 See the [public ha-deco roadmap](https://github.com/users/dkwolf1/projects/2) for ideas, work in progress, and shipped features.
 
+> **Breaking UI change in the v4.2.0-beta.1 prerelease:** Polling and the client
+> management controls move to **Configuration** on the device page. Existing
+> entity IDs and automations are unchanged. This prerelease also introduces
+> **experimental Wi-Fi scanning and optimization**, disabled by default and
+> tested on a Deco X50 (hardware 1.0, firmware 1.11.1 Build 26081714 Rel. 32981).
+> Other models and firmware have not been validated. See the
+> [Wi-Fi optimization guide](https://github.com/dkwolf1/ha-deco/wiki/Configuration#experimental-wi-fi-optimization-v420-beta1).
+
 See the [syslog setup and troubleshooting guide](https://github.com/dkwolf1/ha-deco/wiki/Syslog) for the optional forwarding feature introduced in v3.15.0. Existing installations do not need to enable forwarding or recreate the integration after upgrading.
 
 ---
@@ -144,12 +152,39 @@ names on the WiFi status sensors** in the integration options to add them as
 attributes. A sensor shows a single `ssid` attribute when all bands use the same
 name, or one attribute per band (for example `ssid_band2_4` and `ssid_band5_1`)
 when the names differ. The attribute is omitted when no name is reported.
-Passwords are never read.
+Wireless passwords are not stored or exposed by the integration.
 
 Wireless status uses the configured integration polling interval and does not
 delay integration setup when the optional endpoint is slow or unavailable.
 Changing WiFi settings is not supported because the local write API is not
 reliable across Deco models and firmware versions.
+
+### Wi-Fi channel monitor (v4.2.0-beta.1 prerelease)
+
+The main Deco's **Diagnostics** section shows the current channel and a separate
+channel-width sensor in MHz for each band where the firmware reports those
+values. The channel sensor retains width and the backhaul channel as attributes
+when available. Use Home Assistant history to see when a reported value changed.
+
+The monitor reuses the existing wireless update. It does not scan for
+interference or change channels. If firmware only reports `auto` or omits the
+channel, no numeric channel is shown for that band.
+
+### Experimental Wi-Fi optimization (v4.2.0-beta.1 prerelease)
+
+Enable it in the options for your Deco entry and enter the TP-Link owner email.
+Home Assistant retrieves the public SSH host key from the main Deco. Check the
+address and confirm the displayed fingerprint once on your trusted local
+network. The integration reuses its stored owner password; no terminal or
+second password is required. Initial setup can require internet access to
+download the pinned dependency.
+
+Open the main Deco device. Use **Scan Wi-Fi (preview)** under **Controls**, then
+check the advice and current channels under **Diagnostics**. When optimization
+is recommended, press **Optimize Wi-Fi (preview)** under **Configuration** twice
+within 30 seconds as the same administrator. This may briefly disconnect Wi-Fi.
+The advice comes from the Deco; it is not a list of nearby networks or an
+independent interference measurement. The integration never optimizes automatically.
 
 ### Client blocking and unblocking
 
@@ -157,7 +192,8 @@ Starting with v4.0.0, Home Assistant administrators can manage the Deco block
 list for individual clients on supported firmware. Open **Settings > Devices &
 services > TP-Link Deco**, then the options for the intended Deco entry. Enable
 **Show experimental client blocking controls** and save. Open the **main Deco**
-device (not the client device) and look for **Client access** under **Controls**.
+device (not the client device) and look for **Client access** under **Controls**
+on stable v4.1.x or **Configuration** in the v4.2.0-beta.1 prerelease.
 In v4.1.0 and later, choose a client in step 1, then press **Block** or **Unblock**.
 Use **Refresh block list** after changes in the Deco app.
 
@@ -174,6 +210,7 @@ Starting with v4.1.0, administrators can rename connected clients on supported
 Deco firmware. Enable **Show experimental client renaming controls** for the
 intended Deco entry. On the main Deco device, use the **Client rename** controls
 in order: select a client, enter and confirm a new name, then press **Apply**.
+The controls move from **Controls** to **Configuration** in the v4.2.0-beta.1 prerelease.
 The name field holds a draft; it does not send a change on its own.
 
 Renaming is off by default on the device page and independent of blocking.

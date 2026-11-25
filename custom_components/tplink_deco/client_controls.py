@@ -7,6 +7,7 @@ from homeassistant.components.button import ButtonEntity
 from homeassistant.components.select import SelectEntity
 from homeassistant.components.text import TextEntity
 from homeassistant.const import ATTR_CONFIG_ENTRY_ID
+from homeassistant.const import EntityCategory
 from homeassistant.core import callback
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.exceptions import Unauthorized
@@ -112,6 +113,7 @@ class ClientBlockControls:
 
 class _DecoAccessEntity(Entity):
     _attr_has_entity_name = True
+    _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(self, controls, suffix):
         self.controls = controls

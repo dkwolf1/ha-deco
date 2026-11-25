@@ -43,11 +43,14 @@ from .const import CONF_CLIENT_PREFIX
 from .const import CONF_DECO_POSTFIX
 from .const import CONF_DECO_PREFIX
 from .const import CONF_DEVICE_LIST_INTERVAL
+from .const import CONF_EXPERIMENTAL_WIFI_OPTIMIZATION
 from .const import CONF_EXPOSE_WIFI_SSIDS
 from .const import CONF_LINK_CLIENT_DEVICES
 from .const import CONF_TIMEOUT_ERROR_RETRIES
 from .const import CONF_TIMEOUT_SECONDS
 from .const import CONF_VERIFY_SSL
+from .const import CONF_WIFI_OPTIMIZATION_EMAIL
+from .const import CONF_WIFI_OPTIMIZATION_FINGERPRINT
 from .const import COORDINATOR_CLIENTS_KEY
 from .const import COORDINATOR_DECOS_KEY
 from .const import COORDINATOR_MOBILE_KEY
@@ -66,6 +69,7 @@ from .const import SERVICE_PAUSE_POLLING
 from .const import SERVICE_REBOOT_DECO
 from .const import SERVICE_RESUME_POLLING
 from .const import SYSLOG_FORWARDER_KEY
+from .const import WIFI_OPTIMIZATION_KEY
 from .coordinator import TpLinkDeco
 from .coordinator import TpLinkDecoClient
 from .coordinator import TpLinkDecoData
@@ -75,6 +79,7 @@ from .mobile import TplinkDecoMobileDataUpdateCoordinator
 from .services import async_setup_services
 from .syslog_forwarder import async_remove_syslog_store
 from .syslog_forwarder import async_setup_syslog_forwarder
+from .wifi_optimization import DecoWifiOptimization
 from .wireless import TplinkDecoWirelessUpdateCoordinator
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
@@ -297,6 +302,21 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         rename_controls := async_setup_client_rename_controls(hass, config_entry, data)
     ) is not None:
         data[CLIENT_RENAME_CONTROLS_KEY] = rename_controls
+    if (
+        config_entry.data.get(CONF_EXPERIMENTAL_WIFI_OPTIMIZATION)
+        and config_entry.data.get(CONF_WIFI_OPTIMIZATION_EMAIL)
+        and config_entry.data.get(CONF_WIFI_OPTIMIZATION_FINGERPRINT)
+    ):
+        data[WIFI_OPTIMIZATION_KEY] = DecoWifiOptimization(
+            hass,
+            config_entry,
+            deco_coordinator,
+            wireless_coordinator,
+            config_entry.data[CONF_HOST],
+            config_entry.data[CONF_WIFI_OPTIMIZATION_EMAIL],
+            config_entry.data[CONF_PASSWORD],
+            config_entry.data[CONF_WIFI_OPTIMIZATION_FINGERPRINT],
+        )
 
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 

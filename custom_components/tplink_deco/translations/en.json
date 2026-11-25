@@ -1,5 +1,19 @@
 {
   "entity": {
+    "sensor": {
+      "wifi_channel": { "name": "Wi-Fi channel {band}" },
+      "wifi_channel_width": { "name": "Wi-Fi channel width {band}" },
+      "wifi_optimization_advice": {
+        "name": "Wi-Fi optimization advice",
+        "state": {
+          "optimal": "No optimization recommended",
+          "optimizable": "Optimization recommended",
+          "scanning": "Scan request in progress",
+          "confirm_optimization": "Press Optimize again to confirm",
+          "optimizing": "Optimization in progress"
+        }
+      }
+    },
     "select": {
       "client_access": {
         "name": "Client access: 1. Select client",
@@ -14,12 +28,25 @@
       "new_client_name": { "name": "Client rename: 2. New name" }
     },
     "button": {
+      "wifi_scan": { "name": "Scan Wi-Fi (preview)" },
+      "wifi_optimize": { "name": "Optimize Wi-Fi (preview)" },
       "block_client": { "name": "Client access: 2. Block" },
       "unblock_client": { "name": "Client access: 3. Unblock" },
       "refresh_client_block_list": {
         "name": "Client access: 4. Refresh block list"
       },
       "rename_client": { "name": "Client rename: 3. Apply" }
+    }
+  },
+  "exceptions": {
+    "wifi_optimization_busy": {
+      "message": "The main Deco is unavailable or a Wi-Fi action is already running."
+    },
+    "wifi_optimization_not_recommended": {
+      "message": "The Deco does not currently recommend Wi-Fi optimization. Run a scan if needed."
+    },
+    "wifi_optimization_unconfirmed": {
+      "message": "The Deco did not confirm the outcome. Check its status before trying to optimize again."
     }
   },
   "config": {
@@ -75,9 +102,19 @@
   },
   "options": {
     "step": {
+      "wifi_fingerprint": {
+        "title": "Trust your main Deco",
+        "description": "Home Assistant retrieved the public SSH host key for `{host}` without logging in. SHA-256: `{fingerprint}`. Confirm only if this is your own main Deco and you trust the network. If you have already verified its fingerprint, compare it with the value shown here.",
+        "data": {
+          "trust_fingerprint": "Trust this SSH fingerprint"
+        }
+      },
       "init": {
         "description": "Use the credentials for the admin web portal. See the documentation for setup details.",
         "data": {
+          "experimental_wifi_optimization": "Enable experimental Wi-Fi optimization",
+          "wifi_optimization_email": "TP-Link owner account email",
+          "renew_wifi_fingerprint": "Retrieve and confirm the SSH fingerprint again",
           "host": "Host",
           "username": "Username",
           "password": "Password",
@@ -114,7 +151,11 @@
       "timeout_connect": "Timeout establishing connection",
       "unknown": "Unexpected error",
       "syslog_host_required": "Enter a syslog server host to enable forwarding.",
-      "invalid_device_list_interval": "Enter 0 to disable automatic Deco status updates, or an interval of at least 10 seconds."
+      "invalid_device_list_interval": "Enter 0 to disable automatic Deco status updates, or an interval of at least 10 seconds.",
+      "wifi_optimization_email_required": "Enter the TP-Link owner account email address.",
+      "wifi_fingerprint_unavailable": "Could not read the SSH fingerprint. Check the main Deco address and whether its firmware supports Wi-Fi optimization.",
+      "wifi_fingerprint_dependency_failed": "Home Assistant could not install the Wi-Fi optimization dependency. Check its internet connection and try again.",
+      "wifi_fingerprint_not_confirmed": "Confirm the fingerprint to enable Wi-Fi optimization."
     }
   }
 }
