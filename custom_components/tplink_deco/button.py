@@ -13,7 +13,9 @@ from .const import CLIENT_BLOCK_CONTROLS_KEY
 from .const import CLIENT_RENAME_CONTROLS_KEY
 from .const import COORDINATOR_DECOS_KEY
 from .const import DOMAIN
+from .const import WIFI_OPTIMIZATION_KEY
 from .device import create_device_info
+from .wifi_optimization import DecoWifiOptimizationButton
 
 
 async def async_setup_entry(
@@ -34,6 +36,13 @@ async def async_setup_entry(
         )
     if (rename_controls := data.get(CLIENT_RENAME_CONTROLS_KEY)) is not None:
         entities.append(DecoClientRenameButton(rename_controls))
+    if (wifi := data.get(WIFI_OPTIMIZATION_KEY)) is not None:
+        entities.extend(
+            [
+                DecoWifiOptimizationButton(wifi, config_entry.entry_id, optimize=False),
+                DecoWifiOptimizationButton(wifi, config_entry.entry_id, optimize=True),
+            ]
+        )
     async_add_entities(entities)
 
 

@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from datetime import timedelta
 import logging
+import re
 from time import monotonic
 from typing import Any
 
@@ -25,6 +26,14 @@ WIRELESS_RETRY_INTERVAL_SECONDS = 300
 # Failures tolerated before retries are deferred, so a single slow response
 # does not make the sensors unavailable for the whole retry interval.
 WIRELESS_FAILURES_BEFORE_RETRY_DELAY = 2
+WIRELESS_CHANNEL_BANDS = {
+    "band2_4": "2.4 GHz",
+    "band5": "5 GHz",
+    "band5_1": "5 GHz (1)",
+    "band5_2": "5 GHz (2)",
+    "band6": "6 GHz",
+    "band6_2": "6 GHz (2)",
+}
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -151,6 +160,94 @@ def wireless_ssid_attributes(names: dict[str, str]) -> dict[str, str]:
     return {f"{ATTR_SSID}_{band}": name for band, name in sorted(names.items())}
 
 
+def _channel_number(value: object) -> int | None:
+    if isinstance(value, str) and re.fullmatch(r"[0-9]{1,3}", value.strip()):
+        value = int(value)
+    return value if type(value) is int and 1 <= value <= 233 else None
+
+
+def parse_wireless_channels(config: object) -> dict[str, dict[str, int]]:
+    """Extract numeric channels and widths without retaining wireless settings."""
+    if not isinstance(config, dict):
+        return {}
+
+    channels = {}
+    for band in WIRELESS_CHANNEL_BANDS:
+        radio = config.get(band)
+        if not isinstance(radio, dict):
+            continue
+
+        values = {}
+        host = radio.get("host")
+        if isinstance(host, dict) and (
+            "enable" not in host or _is_enabled(host["enable"])
+        ):
+            if (channel := _channel_number(host.get("channel"))) is not None:
+                values["channel"] = channel
+            width = host.get("channel_width")
+            if isinstance(width, str) and (
+                match := re.fullmatch(
+                    r"(?:HT|VHT|HE|EHT)?(20|40|80|160|320)(?:\s*MHZ)?",
+                    width.strip().upper(),
+                )
+            ):
+                width = int(match[1])
+            if type(width) is int and width in (20, 40, 80, 160, 320):
+                values["channel_width_mhz"] = width
+
+        backhaul = radio.get("backhaul")
+        if isinstance(backhaul, dict) and (
+            "enable" not in backhaul or _is_enabled(backhaul["enable"])
+        ):
+            if (channel := _channel_number(backhaul.get("channel"))) is not None:
+                values["backhaul_channel"] = channel
+        if values:
+            channels[band] = values
+    return channels
+
+
+def summarize_wifi_scan_result(result: dict) -> dict:
+    """Expose only documented counters, flags, and channel recommendations."""
+    summary = {}
+    need_optimize = result.get("need_optimize")
+    if isinstance(need_optimize, bool):
+        summary["need_optimize"] = need_optimize
+    elif type(need_optimize) is int and need_optimize in (0, 1):
+        summary["need_optimize"] = bool(need_optimize)
+    elif isinstance(need_optimize, str):
+        flag = need_optimize.strip().lower()
+        if flag in {"0", "1", "true", "false"}:
+            summary["need_optimize"] = flag in {"1", "true"}
+
+    for key in ("scan_count", "optimize_count"):
+        value = result.get(key)
+        if isinstance(value, str) and re.fullmatch(r"[0-9]{1,10}", value):
+            value = int(value)
+        if type(value) is int and value >= 0:
+            summary[key] = value
+
+    items = result.get("optimize_item")
+    channels = {}
+    if isinstance(items, dict):
+        for band, key in (
+            ("band2_4", "channel_2g"),
+            ("band5_1", "channel_5g"),
+            ("band5_2", "channel_5g_2"),
+            ("band6", "channel_6g"),
+        ):
+            candidate = items.get(band, items.get(key))
+            if isinstance(candidate, dict):
+                candidate = candidate.get(key)
+            if (channel := _channel_number(candidate)) is not None:
+                channels[band] = channel
+    if channels:
+        summary["recommended_channels"] = channels
+
+    if summary:
+        return {"status": "available", **summary}
+    return {"status": "unrecognized_result" if result else "empty_result"}
+
+
 class TplinkDecoWirelessUpdateCoordinator(DataUpdateCoordinator):
     """Coordinate optional wireless status requests."""
 
@@ -175,6 +272,8 @@ class TplinkDecoWirelessUpdateCoordinator(DataUpdateCoordinator):
         )
         self.data = {}
         self.ssids: dict[str, dict[str, str]] = {}
+        self.channels: dict[str, dict[str, int]] = {}
+        self.channel_master_mac: str | None = None
         self._next_retry = 0.0
         self._consecutive_failures = 0
 
@@ -198,6 +297,7 @@ class TplinkDecoWirelessUpdateCoordinator(DataUpdateCoordinator):
         if now < self._next_retry:
             raise UpdateFailed("Wireless status retry is deferred after a failure")
 
+        master = self._deco_coordinator.data.master_deco
         try:
             config = await async_call_and_propagate_config_error(
                 self.api.async_get_wireless, "wlan"
@@ -214,5 +314,7 @@ class TplinkDecoWirelessUpdateCoordinator(DataUpdateCoordinator):
         self.reset_retry()
         states = parse_wireless_states(config)
         self.ssids = parse_wireless_ssids(config) if self.expose_ssids else {}
+        self.channels = parse_wireless_channels(config)
+        self.channel_master_mac = master.mac if master is not None else None
         _LOGGER.debug("Wireless status networks=%s", sorted(states))
         return states

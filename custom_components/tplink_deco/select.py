@@ -1,6 +1,7 @@
 from homeassistant.components.device_tracker.const import CONF_SCAN_INTERVAL
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -37,6 +38,7 @@ class DecoPollingIntervalSelect(SelectEntity):
 
     _attr_has_entity_name = True
     _attr_name = "Polling interval"
+    _attr_entity_category = EntityCategory.CONFIG
     _attr_icon = "mdi:timer-cog"
     _attr_options = POLLING_INTERVAL_OPTIONS
 

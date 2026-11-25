@@ -11,6 +11,8 @@ from homeassistant.const import CONF_USERNAME
 from homeassistant.core import HomeAssistant
 
 from .const import CONF_SYSLOG_HOST
+from .const import CONF_WIFI_OPTIMIZATION_EMAIL
+from .const import CONF_WIFI_OPTIMIZATION_FINGERPRINT
 from .const import COORDINATOR_CLIENTS_KEY
 from .const import COORDINATOR_DECOS_KEY
 from .const import COORDINATOR_MOBILE_KEY
@@ -27,6 +29,8 @@ TO_REDACT = {
     CONF_PASSWORD,
     CONF_SYSLOG_HOST,
     CONF_USERNAME,
+    CONF_WIFI_OPTIMIZATION_EMAIL,
+    CONF_WIFI_OPTIMIZATION_FINGERPRINT,
     "access_token",
     "cookie",
     "refresh_token",
@@ -157,6 +161,11 @@ async def async_get_config_entry_diagnostics(
             ),
             "retry_remaining_seconds": (wireless_coordinator.retry_remaining_seconds),
             "available_networks": sorted(wireless_coordinator.data),
+            "channels": (
+                wireless_coordinator.channels
+                if wireless_coordinator.last_update_success
+                else {}
+            ),
         },
         "mobile_data_coordinator": (
             {

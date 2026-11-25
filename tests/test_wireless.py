@@ -1,5 +1,6 @@
 """Tests for wireless network status support."""
 
+from types import SimpleNamespace
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -10,10 +11,18 @@ import pytest
 
 from custom_components.tplink_deco.api import TplinkDecoApi
 from custom_components.tplink_deco.binary_sensor import TplinkDecoWirelessBinarySensor
+from custom_components.tplink_deco.const import COORDINATOR_CLIENTS_KEY
+from custom_components.tplink_deco.const import COORDINATOR_DECOS_KEY
+from custom_components.tplink_deco.const import COORDINATOR_MOBILE_KEY
+from custom_components.tplink_deco.const import COORDINATOR_WIRELESS_KEY
+from custom_components.tplink_deco.const import DOMAIN
 from custom_components.tplink_deco.exceptions import LoginInvalidException
 from custom_components.tplink_deco.exceptions import TimeoutException
+from custom_components.tplink_deco.sensor import TplinkDecoWirelessChannelSensor
+from custom_components.tplink_deco.sensor import async_setup_entry
 from custom_components.tplink_deco.wireless import TplinkDecoWirelessUpdateCoordinator
 from custom_components.tplink_deco.wireless import WIRELESS_NETWORKS
+from custom_components.tplink_deco.wireless import parse_wireless_channels
 from custom_components.tplink_deco.wireless import parse_wireless_ssids
 from custom_components.tplink_deco.wireless import parse_wireless_states
 from custom_components.tplink_deco.wireless import wireless_ssid_attributes
@@ -29,9 +38,126 @@ def _coordinator(
     coordinator._deco_coordinator = MagicMock(paused=False)
     coordinator.data = {}
     coordinator.ssids = {}
+    coordinator.channels = {}
+    coordinator.channel_master_mac = None
     coordinator._next_retry = 0.0
     coordinator._consecutive_failures = 0
     return coordinator
+
+
+def test_parse_wireless_channels_only_exposes_reported_numeric_values():
+    config = {
+        "band2_4": {
+            "host": {"channel": "6", "channel_width": "HT20", "password": "secret"},
+            "backhaul": {"channel": 11},
+        },
+        "band5_1": {
+            "host": {"channel": 36, "channel_width": "HE80", "ssid": "private"},
+            "guest": {"channel": 44},
+        },
+        "band5_2": {"host": {"channel": "auto", "channel_width": "auto"}},
+        "band6": {"host": {"channel": 37, "channel_width": "EHT320"}},
+        "band6_2": {"host": {"enable": False, "channel": 53, "channel_width": 160}},
+        "band_fake": {"host": {"channel": 1}},
+    }
+    assert parse_wireless_channels(config) == {
+        "band2_4": {"channel": 6, "channel_width_mhz": 20, "backhaul_channel": 11},
+        "band5_1": {"channel": 36, "channel_width_mhz": 80},
+        "band6": {"channel": 37, "channel_width_mhz": 320},
+    }
+
+
+@pytest.mark.parametrize("value", [True, False, 0, 234, -1, 6.5, "auto", {}, None])
+def test_parse_wireless_channels_ignores_invalid_channel(value):
+    assert parse_wireless_channels({"band2_4": {"host": {"channel": value}}}) == {}
+
+
+@pytest.mark.asyncio
+async def test_channel_monitor_uses_existing_poll_and_follows_reported_changes():
+    coordinator = _coordinator(
+        {"band2_4": {"host": {"enable": True, "channel": 1, "channel_width": 20}}},
+        {"band2_4": {"host": {"enable": True, "channel": "6"}}},
+        {"band2_4": {"host": {"enable": True, "channel": "auto"}}},
+    )
+    decos = coordinator._deco_coordinator
+    master = decos.data.master_deco
+    master.mac = "02:00:00:00:00:01"
+    coordinator.last_update_success = True
+    with patch("custom_components.tplink_deco.sensor.create_device_info"):
+        sensor = TplinkDecoWirelessChannelSensor(coordinator, decos, master, "band2_4")
+
+    assert await coordinator._async_update_data() == {"main": True}
+    assert sensor.available
+    assert sensor.native_value == 1
+    assert sensor.extra_state_attributes == {"channel_width_mhz": 20}
+    coordinator.api.async_get_wireless.assert_awaited_once_with("wlan")
+    await coordinator._async_update_data()
+    assert sensor.native_value == 6
+    assert sensor.extra_state_attributes is None
+    coordinator.last_update_success = False
+    assert not sensor.available
+    coordinator.last_update_success = True
+    await coordinator._async_update_data()
+    assert not sensor.available
+    assert sensor.native_value is None
+
+
+@pytest.mark.asyncio
+async def test_channel_sensor_discovery_only_adds_a_reported_band_once():
+    entry = MagicMock(entry_id="mesh")
+    decos = MagicMock(data=SimpleNamespace(master_deco=None, decos={}))
+    wireless = MagicMock(
+        last_update_success=True,
+        channels={"band2_4": {"channel": 6}, "band5_1": {"backhaul_channel": 44}},
+        channel_master_mac="02:00:00:00:00:01",
+    )
+    hass = SimpleNamespace(
+        data={
+            DOMAIN: {
+                entry.entry_id: {
+                    COORDINATOR_DECOS_KEY: decos,
+                    COORDINATOR_CLIENTS_KEY: MagicMock(has_successful_refresh=False),
+                    COORDINATOR_MOBILE_KEY: MagicMock(data=None),
+                    COORDINATOR_WIRELESS_KEY: wireless,
+                }
+            }
+        }
+    )
+    add_entities = MagicMock()
+    with (
+        patch("custom_components.tplink_deco.sensor.async_dispatcher_connect"),
+        patch("custom_components.tplink_deco.sensor.create_device_info"),
+        patch("homeassistant.helpers.entity_registry.async_get"),
+        patch(
+            "homeassistant.helpers.entity_registry.async_entries_for_config_entry",
+            return_value=[],
+        ),
+    ):
+        await async_setup_entry(hass, entry, add_entities)
+        on_wireless_update = wireless.async_add_listener.call_args.args[0]
+        decos.data.master_deco = SimpleNamespace(mac="02:00:00:00:00:02")
+        on_wireless_update()
+        add_entities.assert_not_called()
+        decos.data.master_deco = SimpleNamespace(mac=wireless.channel_master_mac)
+        on_wireless_update()
+        on_wireless_update()
+
+        add_entities.assert_called_once()
+        (channel,) = add_entities.call_args.args[0]
+        assert channel.unique_id == "02:00:00:00:00:01_wifi_channel_band2_4"
+        wireless.channels["band2_4"]["channel_width_mhz"] = 40
+        on_wireless_update()
+        on_wireless_update()
+
+    assert add_entities.call_count == 2
+    (width,) = add_entities.call_args.args[0]
+    assert width.unique_id == "02:00:00:00:00:01_wifi_channel_width_band2_4"
+    assert width.native_value == 40
+    assert width.native_unit_of_measurement == "MHz"
+    assert width.available
+    assert channel.extra_state_attributes == {"channel_width_mhz": 40}
+    del wireless.channels["band2_4"]["channel_width_mhz"]
+    assert not width.available
 
 
 def test_parse_wireless_states_supports_multiple_firmware_values():

@@ -1,5 +1,9 @@
 {
   "entity": {
+    "sensor": {
+      "wifi_channel": { "name": "Canal Wi-Fi {band}" },
+      "wifi_channel_width": { "name": "Largura do canal Wi-Fi {band}" }
+    },
     "select": {
       "client_access": {
         "name": "Acesso de clientes: 1. Escolher cliente",

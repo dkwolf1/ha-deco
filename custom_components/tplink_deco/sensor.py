@@ -13,6 +13,7 @@ from homeassistant.components.sensor.const import SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.const import UnitOfDataRate
+from homeassistant.const import UnitOfFrequency
 from homeassistant.const import UnitOfInformation
 from homeassistant.const import UnitOfTime
 from homeassistant.core import HomeAssistant
@@ -25,13 +26,18 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import COORDINATOR_CLIENTS_KEY
 from .const import COORDINATOR_DECOS_KEY
 from .const import COORDINATOR_MOBILE_KEY
+from .const import COORDINATOR_WIRELESS_KEY
 from .const import DOMAIN
 from .const import SIGNAL_DECO_ADDED
+from .const import WIFI_OPTIMIZATION_KEY
 from .coordinator import TpLinkDeco
 from .coordinator import TplinkDecoClientUpdateCoordinator
 from .coordinator import TplinkDecoUpdateCoordinator
 from .device import create_device_info
 from .mobile import TplinkDecoMobileDataUpdateCoordinator
+from .wifi_optimization import DecoWifiAdviceSensor
+from .wireless import TplinkDecoWirelessUpdateCoordinator
+from .wireless import WIRELESS_CHANNEL_BANDS
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
@@ -230,6 +236,7 @@ async def async_setup_entry(
     coordinator_decos = data[COORDINATOR_DECOS_KEY]
     coordinator_clients = data[COORDINATOR_CLIENTS_KEY]
     coordinator_mobile = data[COORDINATOR_MOBILE_KEY]
+    coordinator_wireless = data.get(COORDINATOR_WIRELESS_KEY)
     registry = er.async_get(hass)
 
     def add_sensors_for_deco(
@@ -400,6 +407,102 @@ async def async_setup_entry(
     )
     add_mobile_data_usage_sensor()
 
+    tracked_channels = set()
+
+    @callback
+    def add_wireless_channel_sensors():
+        """Discover channel sensors from the existing wireless poll."""
+        master = coordinator_decos.data.master_deco
+        if (
+            master is None
+            or not coordinator_wireless.last_update_success
+            or master.mac != coordinator_wireless.channel_master_mac
+        ):
+            return
+        entities = []
+        for band, values in coordinator_wireless.channels.items():
+            for value_key, sensor_type in (
+                ("channel", TplinkDecoWirelessChannelSensor),
+                ("channel_width_mhz", TplinkDecoWirelessChannelWidthSensor),
+            ):
+                key = (master.mac, band, value_key)
+                if value_key not in values or key in tracked_channels:
+                    continue
+                entities.append(
+                    sensor_type(coordinator_wireless, coordinator_decos, master, band)
+                )
+                tracked_channels.add(key)
+        if entities:
+            async_add_entities(entities)
+
+    if coordinator_wireless is not None:
+        entry.async_on_unload(
+            coordinator_wireless.async_add_listener(add_wireless_channel_sensors)
+        )
+        coordinator_decos.on_close(
+            async_dispatcher_connect(
+                hass, SIGNAL_DECO_ADDED, add_wireless_channel_sensors
+            )
+        )
+        add_wireless_channel_sensors()
+    if (wifi := data.get(WIFI_OPTIMIZATION_KEY)) is not None:
+        async_add_entities([DecoWifiAdviceSensor(wifi, entry.entry_id)])
+
+
+class TplinkDecoWirelessChannelSensor(CoordinatorEntity, SensorEntity):
+    """Expose a reported Wi-Fi channel on the main Deco."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "wifi_channel"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:wifi"
+    _value_key = "channel"
+
+    def __init__(
+        self,
+        coordinator: TplinkDecoWirelessUpdateCoordinator,
+        deco_coordinator: TplinkDecoUpdateCoordinator,
+        master: TpLinkDeco,
+        band: str,
+    ) -> None:
+        super().__init__(coordinator)
+        self._deco_coordinator = deco_coordinator
+        self._master_mac = master.mac
+        self._band = band
+        self._attr_unique_id = f"{master.mac}_{self.translation_key}_{band}"
+        self._attr_translation_placeholders = {"band": WIRELESS_CHANNEL_BANDS[band]}
+        self._attr_device_info = create_device_info(master, master, deco_coordinator)
+
+    @property
+    def available(self) -> bool:
+        master = self._deco_coordinator.data.master_deco
+        return (
+            super().available
+            and master is not None
+            and master.mac == self._master_mac
+            and self.coordinator.channel_master_mac == self._master_mac
+            and self.native_value is not None
+        )
+
+    @property
+    def native_value(self) -> int | None:
+        return self.coordinator.channels.get(self._band, {}).get(self._value_key)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, int] | None:
+        if self._value_key != "channel" or not self.available:
+            return None
+        values = self.coordinator.channels[self._band]
+        return {key: value for key, value in values.items() if key != "channel"} or None
+
+
+class TplinkDecoWirelessChannelWidthSensor(TplinkDecoWirelessChannelSensor):
+    """Expose the reported Wi-Fi channel width without another request."""
+
+    _attr_translation_key = "wifi_channel_width"
+    _attr_native_unit_of_measurement = UnitOfFrequency.MEGAHERTZ
+    _value_key = "channel_width_mhz"
+
 
 class TplinkTotalClientDataRateSensor(CoordinatorEntity, SensorEntity):
     """TP-Link total client data rate sensor entity."""
@@ -493,7 +596,6 @@ class TplinkDecoClientCountSensor(CoordinatorEntity, SensorEntity):
 
     _attr_has_entity_name = True
     _attr_name = "Connected clients"
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(
