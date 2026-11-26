@@ -1,29 +1,64 @@
 {
   "entity": {
+    "switch": {
+      "wifi_guest_switch": {
+        "name": "Gjeste-Wi-Fi (forhåndsvisning)"
+      },
+      "wifi_iot_switch": {
+        "name": "IoT-Wi-Fi 2,4 GHz (forhåndsvisning)"
+      }
+    },
     "sensor": {
-      "wifi_channel": { "name": "Wi-Fi-kanal {band}" },
-      "wifi_channel_width": { "name": "Wi-Fi-kanalbredde {band}" }
+      "wifi_channel": {
+        "name": "Wi-Fi-kanal {band}"
+      },
+      "wifi_channel_width": {
+        "name": "Wi-Fi-kanalbredde {band}"
+      }
     },
     "select": {
       "client_access": {
         "name": "Klienttilgang: 1. Velg klient",
-        "state": { "select_client": "Velg en klient" }
+        "state": {
+          "select_client": "Velg en klient"
+        }
       },
       "client_to_rename": {
         "name": "Klientnavn: 1. Velg klient",
-        "state": { "select_client": "Velg en klient" }
+        "state": {
+          "select_client": "Velg en klient"
+        }
       }
     },
     "text": {
-      "new_client_name": { "name": "Klientnavn: 2. Nytt navn" }
+      "new_client_name": {
+        "name": "Klientnavn: 2. Nytt navn"
+      }
     },
     "button": {
-      "block_client": { "name": "Klienttilgang: 2. Blokker" },
-      "unblock_client": { "name": "Klienttilgang: 3. Opphev blokkering" },
+      "block_client": {
+        "name": "Klienttilgang: 2. Blokker"
+      },
+      "unblock_client": {
+        "name": "Klienttilgang: 3. Opphev blokkering"
+      },
       "refresh_client_block_list": {
         "name": "Klienttilgang: 4. Oppdater listen"
       },
-      "rename_client": { "name": "Klientnavn: 3. Bruk" }
+      "rename_client": {
+        "name": "Klientnavn: 3. Bruk"
+      }
+    }
+  },
+  "exceptions": {
+    "iot_wifi_band_unsupported": {
+      "message": "Denne bryteren støtter bare IoT-Wi-Fi på 2,4 GHz. Bruk Deco-appen for andre bånd."
+    },
+    "optional_wifi_unverified": {
+      "message": "Endringen kunne ikke bekreftes. Sjekk statusen i Deco-appen før du prøver igjen."
+    },
+    "optional_wifi_unavailable": {
+      "message": "Wi-Fi-bryteren er utilgjengelig. Sjekk hoved-Deco og at avlesning er aktivert."
     }
   },
   "config": {
@@ -49,9 +84,19 @@
   },
   "options": {
     "step": {
+      "wifi_fingerprint": {
+        "title": "Stol på hoved-Deco",
+        "description": "Home Assistant hentet den offentlige SSH-nøkkelen til `{host}` uten å logge inn. SHA-256: `{fingerprint}`. Bekreft bare på et nettverk du stoler på, og sammenlign med et verifisert fingeravtrykk hvis du har det.",
+        "data": {
+          "trust_fingerprint": "Stol på dette SSH-fingeravtrykket"
+        }
+      },
       "init": {
         "title": "TP-Link Deco",
         "data": {
+          "experimental_wifi_optimization": "Aktiver eksperimentell Wi-Fi-optimalisering",
+          "wifi_optimization_email": "E-postadresse til TP-Link-eierkontoen",
+          "renew_wifi_fingerprint": "Hent og bekreft SSH-fingeravtrykket på nytt",
           "experimental_client_block_controls": "Vis eksperimentelle kontroller for klientblokkering",
           "experimental_client_rename_controls": "Vis eksperimentelle kontroller for å endre klientnavn",
           "username": "Brukernavn",

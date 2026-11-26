@@ -21,6 +21,7 @@ from homeassistant.requirements import async_process_requirements
 
 from .const import DOMAIN
 from .device import create_device_info
+from .wireless_toggle import writable_wireless_flags
 
 TMP_REQUIREMENT = (
     "pydeco-tmp @ https://github.com/mthsg/pydeco-tmp/archive/"
@@ -28,6 +29,7 @@ TMP_REQUIREMENT = (
 )
 OPTIMIZE_OPCODE = 0x4266
 TMP_SSH_PORT = 20001
+TMP_GUEST_BANDS = ("band2_4", "band5_1")
 VERDICTS = ("optimal", "optimizable")
 ADVICE_STATES = (*VERDICTS, "scanning", "confirm_optimization", "optimizing")
 
@@ -76,6 +78,94 @@ def _acknowledged(reply):
         and type(reply.get("error_code")) is int
         and reply["error_code"] == 0
     )
+
+
+def _run_guest_operation(client, enabled: bool) -> None:
+    """Change only the tested guest flags and verify them via TMP."""
+
+    def read_flags():
+        config = client.get("wifi_bands_info")
+        if isinstance(config, dict):
+            config = config.get("result", config)
+        flags = writable_wireless_flags(config, "guest")
+        if set(flags) != set(TMP_GUEST_BANDS):
+            return {}
+        for band in TMP_GUEST_BANDS:
+            host = config[band].get("host")
+            if not isinstance(host, dict) or host.get("enable") is not True:
+                return {}
+        return flags
+
+    try:
+        client.connect()
+        before = read_flags()
+        if not before or len(set(before.values())) != 1:
+            raise _wifi_error("optional_wifi_unavailable")
+        if all(value is enabled for value in before.values()):
+            return
+        client.set(
+            "guest_network_set",
+            {band: {"guest": {"enable": enabled}} for band in TMP_GUEST_BANDS},
+            confirm=True,
+        )
+        if read_flags() != dict.fromkeys(TMP_GUEST_BANDS, enabled):
+            raise _wifi_error("optional_wifi_unverified")
+    finally:
+        client.close()
+
+
+def _run_iot_operation(client, enabled: bool) -> None:
+    """Change only 2.4 GHz, the tested IoT configuration."""
+
+    def read_state():
+        config = client.get("wifi_bands_info")
+        if isinstance(config, dict):
+            config = config.get("result", config)
+        if not isinstance(config, dict):
+            return None
+        if {key for key in config if key.startswith("band")} != set(TMP_GUEST_BANDS):
+            return None
+        untouched = {}
+        for band in TMP_GUEST_BANDS:
+            radio = config[band]
+            if not isinstance(radio, dict) or any(
+                not isinstance(radio.get(key), dict) for key in ("host", "guest", "iot")
+            ):
+                return None
+            host, guest, iot = (radio[key] for key in ("host", "guest", "iot"))
+            if host.get("enable") is not True or type(guest.get("enable")) is not bool:
+                return None
+            if band == "band5_1" and iot.get("enable") is not False:
+                return None
+            untouched[band] = (
+                guest["enable"],
+                {
+                    key: iot[key]
+                    for key in ("ssid", "password", "encryption_mode", "encryption")
+                    if key in iot
+                },
+            )
+        flag = config["band2_4"]["iot"].get("enable")
+        return (flag, untouched) if type(flag) is bool else None
+
+    try:
+        client.connect()
+        before = read_state()
+        if before is None:
+            raise _wifi_error("iot_wifi_band_unsupported")
+        state, untouched = before
+        if state is enabled:
+            return
+        # The TMP library names the shared wireless write after its guest capture.
+        client.set(
+            "guest_network_set",
+            {"band2_4": {"iot": {"enable": enabled}}},
+            confirm=True,
+        )
+        if read_state() != (enabled, untouched):
+            raise _wifi_error("optional_wifi_unverified")
+    finally:
+        client.close()
 
 
 def _run_wifi_operation(client, optimize):
@@ -201,19 +291,44 @@ class DecoWifiOptimization:
         self._clear_confirmation()
         self._publish()
 
-    def _execute(self, optimize):
+    def _new_client(self):
         from pydeco import DecoClient
 
-        return _run_wifi_operation(
-            DecoClient(
-                self._host,
-                self._email,
-                self._password,
-                host_key_sha256=self._fingerprint,
-                timeout=30,
-            ),
-            optimize,
+        return DecoClient(
+            self._host,
+            self._email,
+            self._password,
+            host_key_sha256=self._fingerprint,
+            timeout=30,
         )
+
+    def _execute(self, optimize):
+        return _run_wifi_operation(self._new_client(), optimize)
+
+    def _execute_guest(self, enabled):
+        _run_guest_operation(self._new_client(), enabled)
+
+    def _execute_iot(self, enabled):
+        _run_iot_operation(self._new_client(), enabled)
+
+    async def _ensure_library(self):
+        if not self._library_ready:
+            await async_process_requirements(self.hass, DOMAIN, [TMP_REQUIREMENT])
+            self._library_ready = True
+
+    async def async_set_network_enabled(
+        self, network: str, master_mac: str, enabled: bool
+    ) -> None:
+        """Use the same pinned account and serialized TMP session as scanning."""
+        operation = {"guest": self._execute_guest, "iot": self._execute_iot}[network]
+        if self.busy:
+            raise _wifi_error("wifi_optimization_busy")
+        async with self._lock:
+            await self._ensure_library()
+            master = self.decos.data.master_deco
+            if self.decos.paused or master is None or master.mac != master_mac:
+                raise _wifi_error("optional_wifi_unavailable")
+            await self.hass.async_add_executor_job(operation, enabled)
 
     async def async_press(self, optimize, user_id):
         if self.busy or not self.available:
@@ -235,11 +350,7 @@ class DecoWifiOptimization:
             async with self._lock:
                 self.activity = "optimizing" if optimize else "scanning"
                 self._publish()
-                if not self._library_ready:
-                    await async_process_requirements(
-                        self.hass, DOMAIN, [TMP_REQUIREMENT]
-                    )
-                    self._library_ready = True
+                await self._ensure_library()
                 self.result = await self.hass.async_add_executor_job(
                     self._execute, optimize
                 )

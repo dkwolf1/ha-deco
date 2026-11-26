@@ -1,8 +1,20 @@
 {
   "entity": {
+    "switch": {
+      "wifi_guest_switch": {
+        "name": "Guest Wi-Fi (preview)"
+      },
+      "wifi_iot_switch": {
+        "name": "IoT Wi-Fi 2.4 GHz (preview)"
+      }
+    },
     "sensor": {
-      "wifi_channel": { "name": "Wi-Fi channel {band}" },
-      "wifi_channel_width": { "name": "Wi-Fi channel width {band}" },
+      "wifi_channel": {
+        "name": "Wi-Fi channel {band}"
+      },
+      "wifi_channel_width": {
+        "name": "Wi-Fi channel width {band}"
+      },
       "wifi_optimization_advice": {
         "name": "Wi-Fi optimization advice",
         "state": {
@@ -17,28 +29,53 @@
     "select": {
       "client_access": {
         "name": "Client access: 1. Select client",
-        "state": { "select_client": "Choose a client" }
+        "state": {
+          "select_client": "Choose a client"
+        }
       },
       "client_to_rename": {
         "name": "Client rename: 1. Select client",
-        "state": { "select_client": "Choose a client" }
+        "state": {
+          "select_client": "Choose a client"
+        }
       }
     },
     "text": {
-      "new_client_name": { "name": "Client rename: 2. New name" }
+      "new_client_name": {
+        "name": "Client rename: 2. New name"
+      }
     },
     "button": {
-      "wifi_scan": { "name": "Scan Wi-Fi (preview)" },
-      "wifi_optimize": { "name": "Optimize Wi-Fi (preview)" },
-      "block_client": { "name": "Client access: 2. Block" },
-      "unblock_client": { "name": "Client access: 3. Unblock" },
+      "wifi_scan": {
+        "name": "Scan Wi-Fi (preview)"
+      },
+      "wifi_optimize": {
+        "name": "Optimize Wi-Fi (preview)"
+      },
+      "block_client": {
+        "name": "Client access: 2. Block"
+      },
+      "unblock_client": {
+        "name": "Client access: 3. Unblock"
+      },
       "refresh_client_block_list": {
         "name": "Client access: 4. Refresh block list"
       },
-      "rename_client": { "name": "Client rename: 3. Apply" }
+      "rename_client": {
+        "name": "Client rename: 3. Apply"
+      }
     }
   },
   "exceptions": {
+    "iot_wifi_band_unsupported": {
+      "message": "This preview switch supports IoT Wi-Fi on 2.4 GHz only. Use the Deco app for other band settings."
+    },
+    "optional_wifi_unavailable": {
+      "message": "This Wi-Fi switch is unavailable. Check the main Deco and whether polling is enabled."
+    },
+    "optional_wifi_unverified": {
+      "message": "The change could not be verified. Check the current status in the Deco app before trying again."
+    },
     "wifi_optimization_busy": {
       "message": "The main Deco is unavailable or a Wi-Fi action is already running."
     },

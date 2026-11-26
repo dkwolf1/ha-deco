@@ -1,8 +1,20 @@
 {
   "entity": {
+    "switch": {
+      "wifi_guest_switch": {
+        "name": "Gastwifi (test)"
+      },
+      "wifi_iot_switch": {
+        "name": "IoT-wifi 2,4 GHz (test)"
+      }
+    },
     "sensor": {
-      "wifi_channel": { "name": "Wifi-kanaal {band}" },
-      "wifi_channel_width": { "name": "Wifi-kanaalbreedte {band}" },
+      "wifi_channel": {
+        "name": "Wifi-kanaal {band}"
+      },
+      "wifi_channel_width": {
+        "name": "Wifi-kanaalbreedte {band}"
+      },
       "wifi_optimization_advice": {
         "name": "Wifi-optimalisatieadvies",
         "state": {
@@ -17,26 +29,53 @@
     "select": {
       "client_access": {
         "name": "Blokkering: 1. Client kiezen",
-        "state": { "select_client": "Kies een client" }
+        "state": {
+          "select_client": "Kies een client"
+        }
       },
       "client_to_rename": {
         "name": "Clientnaam: 1. Client kiezen",
-        "state": { "select_client": "Kies een client" }
+        "state": {
+          "select_client": "Kies een client"
+        }
       }
     },
     "text": {
-      "new_client_name": { "name": "Clientnaam: 2. Nieuwe naam" }
+      "new_client_name": {
+        "name": "Clientnaam: 2. Nieuwe naam"
+      }
     },
     "button": {
-      "wifi_scan": { "name": "Wifi scannen (test)" },
-      "wifi_optimize": { "name": "Wifi optimaliseren (test)" },
-      "block_client": { "name": "Blokkering: 2. Blokkeren" },
-      "unblock_client": { "name": "Blokkering: 3. Deblokkeren" },
-      "refresh_client_block_list": { "name": "Blokkering: 4. Lijst verversen" },
-      "rename_client": { "name": "Clientnaam: 3. Hernoemen" }
+      "wifi_scan": {
+        "name": "Wifi scannen (test)"
+      },
+      "wifi_optimize": {
+        "name": "Wifi optimaliseren (test)"
+      },
+      "block_client": {
+        "name": "Blokkering: 2. Blokkeren"
+      },
+      "unblock_client": {
+        "name": "Blokkering: 3. Deblokkeren"
+      },
+      "refresh_client_block_list": {
+        "name": "Blokkering: 4. Lijst verversen"
+      },
+      "rename_client": {
+        "name": "Clientnaam: 3. Hernoemen"
+      }
     }
   },
   "exceptions": {
+    "iot_wifi_band_unsupported": {
+      "message": "Deze testschakelaar ondersteunt alleen IoT-wifi op 2,4 GHz. Gebruik de Deco-app voor andere bandinstellingen."
+    },
+    "optional_wifi_unavailable": {
+      "message": "Deze wifi-schakelaar is niet beschikbaar. Controleer de hoofd-Deco en of polling aanstaat."
+    },
+    "optional_wifi_unverified": {
+      "message": "De wijziging kon niet worden bevestigd. Controleer de actuele status in de Deco-app voordat je het opnieuw probeert."
+    },
     "wifi_optimization_busy": {
       "message": "De hoofd-Deco is niet beschikbaar of er loopt al een wifi-actie."
     },

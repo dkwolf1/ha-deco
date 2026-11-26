@@ -1,29 +1,64 @@
 {
   "entity": {
+    "switch": {
+      "wifi_guest_switch": {
+        "name": "Gäst-Wi-Fi (förhandsversion)"
+      },
+      "wifi_iot_switch": {
+        "name": "IoT-Wi-Fi 2,4 GHz (förhandsversion)"
+      }
+    },
     "sensor": {
-      "wifi_channel": { "name": "Wi-Fi-kanal {band}" },
-      "wifi_channel_width": { "name": "Wi-Fi-kanalbredd {band}" }
+      "wifi_channel": {
+        "name": "Wi-Fi-kanal {band}"
+      },
+      "wifi_channel_width": {
+        "name": "Wi-Fi-kanalbredd {band}"
+      }
     },
     "select": {
       "client_access": {
         "name": "Klientåtkomst: 1. Välj klient",
-        "state": { "select_client": "Välj en klient" }
+        "state": {
+          "select_client": "Välj en klient"
+        }
       },
       "client_to_rename": {
         "name": "Klientnamn: 1. Välj klient",
-        "state": { "select_client": "Välj en klient" }
+        "state": {
+          "select_client": "Välj en klient"
+        }
       }
     },
     "text": {
-      "new_client_name": { "name": "Klientnamn: 2. Nytt namn" }
+      "new_client_name": {
+        "name": "Klientnamn: 2. Nytt namn"
+      }
     },
     "button": {
-      "block_client": { "name": "Klientåtkomst: 2. Blockera" },
-      "unblock_client": { "name": "Klientåtkomst: 3. Avblockera" },
+      "block_client": {
+        "name": "Klientåtkomst: 2. Blockera"
+      },
+      "unblock_client": {
+        "name": "Klientåtkomst: 3. Avblockera"
+      },
       "refresh_client_block_list": {
         "name": "Klientåtkomst: 4. Uppdatera listan"
       },
-      "rename_client": { "name": "Klientnamn: 3. Verkställ" }
+      "rename_client": {
+        "name": "Klientnamn: 3. Verkställ"
+      }
+    }
+  },
+  "exceptions": {
+    "iot_wifi_band_unsupported": {
+      "message": "Reglaget stöder bara IoT-Wi-Fi på 2,4 GHz. Använd Deco-appen för andra band."
+    },
+    "optional_wifi_unverified": {
+      "message": "Ändringen kunde inte bekräftas. Kontrollera statusen i Deco-appen innan du försöker igen."
+    },
+    "optional_wifi_unavailable": {
+      "message": "Wi-Fi-reglaget är inte tillgängligt. Kontrollera huvud-Deco och att avläsningen är aktiverad."
     }
   },
   "config": {
@@ -67,9 +102,19 @@
   },
   "options": {
     "step": {
+      "wifi_fingerprint": {
+        "title": "Lita på din huvud-Deco",
+        "description": "Home Assistant hämtade den offentliga SSH-nyckeln för `{host}` utan att logga in. SHA-256: `{fingerprint}`. Bekräfta bara på ett betrott nätverk och jämför med ett verifierat fingeravtryck om du har ett.",
+        "data": {
+          "trust_fingerprint": "Lita på detta SSH-fingeravtryck"
+        }
+      },
       "init": {
         "description": "Använd användaruppgifterna för webbportalen. Följ instruktioner enligt sidan https://github.com/dkwolf1/ha-deco#configuration-important-please-read",
         "data": {
+          "experimental_wifi_optimization": "Aktivera experimentell Wi-Fi-optimering",
+          "wifi_optimization_email": "E-postadress för TP-Link-ägarkontot",
+          "renew_wifi_fingerprint": "Hämta och bekräfta SSH-fingeravtrycket igen",
           "experimental_client_block_controls": "Visa experimentella reglage för klientblockering",
           "experimental_client_rename_controls": "Visa experimentella reglage för att byta klientnamn",
           "host": "Värd",
