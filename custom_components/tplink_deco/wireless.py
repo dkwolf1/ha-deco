@@ -20,6 +20,7 @@ from .const import ATTR_SSID
 from .const import DOMAIN
 from .coordinator import TplinkDecoUpdateCoordinator
 from .coordinator import async_call_and_propagate_config_error
+from .wireless_toggle import writable_wireless_flags
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 WIRELESS_RETRY_INTERVAL_SECONDS = 300
@@ -274,6 +275,7 @@ class TplinkDecoWirelessUpdateCoordinator(DataUpdateCoordinator):
         self.ssids: dict[str, dict[str, str]] = {}
         self.channels: dict[str, dict[str, int]] = {}
         self.channel_master_mac: str | None = None
+        self.toggle_networks: dict[str, bool] = {}
         self._next_retry = 0.0
         self._consecutive_failures = 0
 
@@ -315,6 +317,11 @@ class TplinkDecoWirelessUpdateCoordinator(DataUpdateCoordinator):
         states = parse_wireless_states(config)
         self.ssids = parse_wireless_ssids(config) if self.expose_ssids else {}
         self.channels = parse_wireless_channels(config)
+        self.toggle_networks = {
+            network: any(flags.values())
+            for network in ("guest", "iot")
+            if (flags := writable_wireless_flags(config, network))
+        }
         self.channel_master_mac = master.mac if master is not None else None
         _LOGGER.debug("Wireless status networks=%s", sorted(states))
         return states

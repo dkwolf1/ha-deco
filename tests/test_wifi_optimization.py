@@ -6,6 +6,7 @@ from unittest.mock import Mock
 
 from homeassistant.const import CONF_HOST
 from homeassistant.core import Context
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.exceptions import Unauthorized
 import pytest
 
@@ -24,6 +25,86 @@ def _quality(state, verdict):
             "detail": [{"type": "channel_quality", "state": verdict}],
         }
     }
+
+
+def _guest_radios(first, second):
+    return {
+        "band2_4": {"host": {"enable": True}, "guest": {"enable": first}},
+        "band5_1": {
+            "host": {"enable": True},
+            "guest": {"enable": second, "password": "unchanged"},
+        },
+    }
+
+
+@pytest.mark.parametrize("enabled", [True, False])
+def test_tmp_guest_operation_writes_only_guest_flags(enabled):
+    client = Mock()
+    client.get.side_effect = [
+        {"result": _guest_radios(not enabled, not enabled)},
+        _guest_radios(enabled, enabled),
+    ]
+    wifi._run_guest_operation(client, enabled)
+    client.set.assert_called_once_with(
+        "guest_network_set",
+        {band: {"guest": {"enable": enabled}} for band in ("band2_4", "band5_1")},
+        confirm=True,
+    )
+    client.close.assert_called_once()
+
+
+def test_tmp_guest_refuses_mixed_band_settings():
+    client = Mock()
+    client.get.return_value = _guest_radios(True, False)
+    with pytest.raises(HomeAssistantError) as err:
+        wifi._run_guest_operation(client, False)
+    assert err.value.translation_key == "optional_wifi_unavailable"
+    client.set.assert_not_called()
+
+
+def test_tmp_guest_unverified_result_does_not_retry():
+    client = Mock()
+    client.get.side_effect = [_guest_radios(False, False), _guest_radios(True, False)]
+    with pytest.raises(HomeAssistantError) as err:
+        wifi._run_guest_operation(client, True)
+    assert err.value.translation_key == "optional_wifi_unverified"
+    client.set.assert_called_once()
+
+
+def _iot_radios(state, *, five_ghz=False, encryption="wpa2"):
+    radios = _guest_radios(False, False)
+    for band, flag in (("band2_4", state), ("band5_1", five_ghz)):
+        radios[band]["iot"] = {"enable": flag, "encryption_mode": encryption}
+    return radios
+
+
+@pytest.mark.parametrize("enabled", [True, False])
+def test_tmp_iot_operation_changes_only_the_24ghz_flag(enabled):
+    client = Mock()
+    client.get.side_effect = [_iot_radios(not enabled), _iot_radios(enabled)]
+    wifi._run_iot_operation(client, enabled)
+    client.set.assert_called_once_with(
+        "guest_network_set", {"band2_4": {"iot": {"enable": enabled}}}, confirm=True
+    )
+    client.close.assert_called_once()
+
+
+def test_tmp_iot_refuses_other_active_bands():
+    client = Mock()
+    client.get.return_value = _iot_radios(True, five_ghz=True)
+    with pytest.raises(HomeAssistantError) as err:
+        wifi._run_iot_operation(client, False)
+    assert err.value.translation_key == "iot_wifi_band_unsupported"
+    client.set.assert_not_called()
+
+
+def test_tmp_iot_unverified_when_encryption_changed():
+    client = Mock()
+    client.get.side_effect = [_iot_radios(True), _iot_radios(False, encryption="none")]
+    with pytest.raises(HomeAssistantError) as err:
+        wifi._run_iot_operation(client, False)
+    assert err.value.translation_key == "optional_wifi_unverified"
+    client.set.assert_called_once()
 
 
 def test_feature_options_require_owner_email_only_when_enabled():

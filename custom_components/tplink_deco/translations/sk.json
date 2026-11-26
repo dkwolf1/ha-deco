@@ -1,29 +1,64 @@
 {
   "entity": {
+    "switch": {
+      "wifi_guest_switch": {
+        "name": "Wi-Fi pre hostí (ukážka)"
+      },
+      "wifi_iot_switch": {
+        "name": "IoT Wi-Fi 2,4 GHz (ukážka)"
+      }
+    },
     "sensor": {
-      "wifi_channel": { "name": "Kanál Wi-Fi {band}" },
-      "wifi_channel_width": { "name": "Šírka kanála Wi-Fi {band}" }
+      "wifi_channel": {
+        "name": "Kanál Wi-Fi {band}"
+      },
+      "wifi_channel_width": {
+        "name": "Šírka kanála Wi-Fi {band}"
+      }
     },
     "select": {
       "client_access": {
         "name": "Prístup klientov: 1. Vybrať klienta",
-        "state": { "select_client": "Vyberte klienta" }
+        "state": {
+          "select_client": "Vyberte klienta"
+        }
       },
       "client_to_rename": {
         "name": "Názov klienta: 1. Vybrať klienta",
-        "state": { "select_client": "Vyberte klienta" }
+        "state": {
+          "select_client": "Vyberte klienta"
+        }
       }
     },
     "text": {
-      "new_client_name": { "name": "Názov klienta: 2. Nový názov" }
+      "new_client_name": {
+        "name": "Názov klienta: 2. Nový názov"
+      }
     },
     "button": {
-      "block_client": { "name": "Prístup klientov: 2. Zablokovať" },
-      "unblock_client": { "name": "Prístup klientov: 3. Odblokovať" },
+      "block_client": {
+        "name": "Prístup klientov: 2. Zablokovať"
+      },
+      "unblock_client": {
+        "name": "Prístup klientov: 3. Odblokovať"
+      },
       "refresh_client_block_list": {
         "name": "Prístup klientov: 4. Obnoviť zoznam"
       },
-      "rename_client": { "name": "Názov klienta: 3. Použiť" }
+      "rename_client": {
+        "name": "Názov klienta: 3. Použiť"
+      }
+    }
+  },
+  "exceptions": {
+    "iot_wifi_band_unsupported": {
+      "message": "Tento prepínač podporuje iba IoT Wi-Fi v pásme 2,4 GHz. Pre iné pásma použite aplikáciu Deco."
+    },
+    "optional_wifi_unverified": {
+      "message": "Zmenu sa nepodarilo potvrdiť. Pred ďalším pokusom skontrolujte stav v aplikácii Deco."
+    },
+    "optional_wifi_unavailable": {
+      "message": "Tento prepínač Wi-Fi nie je dostupný. Skontrolujte hlavné zariadenie Deco a či je zapnuté načítavanie údajov."
     }
   },
   "config": {
@@ -70,9 +105,19 @@
   },
   "options": {
     "step": {
+      "wifi_fingerprint": {
+        "title": "Dôverovať hlavnému zariadeniu Deco",
+        "description": "Home Assistant načítal verejný kľúč SSH zariadenia `{host}` bez prihlásenia. SHA-256: `{fingerprint}`. Potvrďte ho iba v dôveryhodnej sieti a porovnajte ho s overeným odtlačkom, ak ho máte.",
+        "data": {
+          "trust_fingerprint": "Dôverovať tomuto odtlačku SSH"
+        }
+      },
       "init": {
         "description": "Použite poverenia pre webový portál správcu. Pozri https://github.com/dkwolf1/ha-deco#configuration-important-please-read",
         "data": {
+          "experimental_wifi_optimization": "Zapnúť experimentálnu optimalizáciu Wi-Fi",
+          "wifi_optimization_email": "E-mail vlastníckeho účtu TP-Link",
+          "renew_wifi_fingerprint": "Znova načítať a potvrdiť odtlačok SSH",
           "experimental_client_block_controls": "Zobraziť experimentálne ovládanie blokovania klientov",
           "experimental_client_rename_controls": "Zobraziť experimentálne ovládanie premenovania klientov",
           "host": "Host",

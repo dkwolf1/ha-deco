@@ -1,29 +1,64 @@
 {
   "entity": {
+    "switch": {
+      "wifi_guest_switch": {
+        "name": "Wi-Fi invité (aperçu)"
+      },
+      "wifi_iot_switch": {
+        "name": "Wi-Fi IoT 2,4 GHz (aperçu)"
+      }
+    },
     "sensor": {
-      "wifi_channel": { "name": "Canal Wi-Fi {band}" },
-      "wifi_channel_width": { "name": "Largeur du canal Wi-Fi {band}" }
+      "wifi_channel": {
+        "name": "Canal Wi-Fi {band}"
+      },
+      "wifi_channel_width": {
+        "name": "Largeur du canal Wi-Fi {band}"
+      }
     },
     "select": {
       "client_access": {
         "name": "Accès client : 1. Choisir le client",
-        "state": { "select_client": "Choisir un client" }
+        "state": {
+          "select_client": "Choisir un client"
+        }
       },
       "client_to_rename": {
         "name": "Nom du client : 1. Choisir le client",
-        "state": { "select_client": "Choisir un client" }
+        "state": {
+          "select_client": "Choisir un client"
+        }
       }
     },
     "text": {
-      "new_client_name": { "name": "Nom du client : 2. Nouveau nom" }
+      "new_client_name": {
+        "name": "Nom du client : 2. Nouveau nom"
+      }
     },
     "button": {
-      "block_client": { "name": "Accès client : 2. Bloquer" },
-      "unblock_client": { "name": "Accès client : 3. Débloquer" },
+      "block_client": {
+        "name": "Accès client : 2. Bloquer"
+      },
+      "unblock_client": {
+        "name": "Accès client : 3. Débloquer"
+      },
       "refresh_client_block_list": {
         "name": "Accès client : 4. Actualiser la liste"
       },
-      "rename_client": { "name": "Nom du client : 3. Appliquer" }
+      "rename_client": {
+        "name": "Nom du client : 3. Appliquer"
+      }
+    }
+  },
+  "exceptions": {
+    "iot_wifi_band_unsupported": {
+      "message": "Ce commutateur ne prend en charge que le Wi-Fi IoT à 2,4 GHz. Utilisez l’application Deco pour les autres bandes."
+    },
+    "optional_wifi_unverified": {
+      "message": "La modification n’a pas pu être vérifiée. Vérifiez son état dans l’application Deco avant de réessayer."
+    },
+    "optional_wifi_unavailable": {
+      "message": "Ce commutateur Wi-Fi est indisponible. Vérifiez le Deco principal et l’actualisation des données."
     }
   },
   "config": {
@@ -49,9 +84,19 @@
   },
   "options": {
     "step": {
+      "wifi_fingerprint": {
+        "title": "Faire confiance au Deco principal",
+        "description": "Home Assistant a récupéré la clé SSH publique de `{host}` sans se connecter. SHA-256 : `{fingerprint}`. Confirmez uniquement sur un réseau de confiance et comparez avec une empreinte vérifiée si vous en avez une.",
+        "data": {
+          "trust_fingerprint": "Faire confiance à cette empreinte SSH"
+        }
+      },
       "init": {
         "title": "TP-Link Deco",
         "data": {
+          "experimental_wifi_optimization": "Activez l’optimisation Wi-Fi expérimentale",
+          "wifi_optimization_email": "Adresse e-mail du compte propriétaire TP-Link",
+          "renew_wifi_fingerprint": "Récupérer et confirmer à nouveau l’empreinte SSH",
           "experimental_client_block_controls": "Afficher les commandes expérimentales de blocage des clients",
           "experimental_client_rename_controls": "Afficher les commandes expérimentales de renommage des clients",
           "username": "Identifiant",
